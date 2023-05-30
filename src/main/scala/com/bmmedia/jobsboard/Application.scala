@@ -10,14 +10,24 @@ import cats.effect.IOApp
 import org.http4s.ember.server.EmberServerBuilder
 import com.bmmedia.jobsboard.http.HttpApi
 import com.comcast.ip4s.Host
+import pureconfig.ConfigSource
+import com.bmmedia.jobsboard.config.*
+import com.bmmedia.jobsboard.config.syntax.*
 
 object Application extends IOApp.Simple {
 
-  override def run: IO[Unit] = EmberServerBuilder
-    .default[IO]
-    .withHttpApp(
-      HttpApi[IO].endpoints.orNotFound
-    )
-    .build
-    .useForever
+  val configSource = ConfigSource.default.load[EmberConfig]
+
+  override def run: IO[Unit] =
+    ConfigSource.default.loadF[IO, EmberConfig].flatMap { config =>
+      EmberServerBuilder
+        .default[IO]
+        .withHost(config.host)
+        .withPort(config.port)
+        .withHttpApp(
+          HttpApi[IO].endpoints.orNotFound
+        )
+        .build
+        .useForever
+    }
 }
