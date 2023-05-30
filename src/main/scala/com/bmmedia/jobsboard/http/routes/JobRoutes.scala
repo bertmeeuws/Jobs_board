@@ -6,7 +6,13 @@ import cats.Monad
 import org.http4s.server.Router
 import cats.implicits._
 
+import scala.collection.mutable
+import java.util.UUID
+import com.bmmedia.jobsboard.domain.job.*
+
 class JobRoutes[F[_]: Monad] private extends Http4sDsl[F] {
+
+  private val jobsDatabase = mutable.Map.empty[UUID, Job]
 
   // Get all jobs
   private val allJobsRoute: HttpRoutes[F] = HttpRoutes.of[F] { case GET -> Root =>
