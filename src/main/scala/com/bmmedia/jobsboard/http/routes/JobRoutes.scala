@@ -18,6 +18,7 @@ import com.bmmedia.jobsboard.domain.job.*
 import cats.effect.*
 
 import org.typelevel.log4cats.Logger
+import org.checkerframework.checker.units.qual.s
 
 class JobRoutes[F[_]: Concurrent: Logger] private extends Http4sDsl[F] {
 
@@ -45,13 +46,15 @@ class JobRoutes[F[_]: Concurrent: Logger] private extends Http4sDsl[F] {
       active = true
     ).pure[F]
 
+  import com.bmmedia.jobsboard.logging.syntax.*
+
   private val createJobRoute: HttpRoutes[F] = HttpRoutes.of[F] { case req @ POST -> Root =>
     for {
-      _       <- (println("Creating job")).pure[F]
-      jobInfo <- req.as[JobInfo]
-      _       <- (println(jobInfo)).pure[F]
+      _       <- Logger[F].info(s"Creating job")
+      jobInfo <- req.as[JobInfo].logError(e => s"Error parsing job info: $e")
+      _       <- Logger[F].info(s"Job info: $jobInfo")
       job     <- createJob(jobInfo)
-      _       <- jobsDatabase.update(job.id, job).pure[F]
+      _       <- jobsDatabase.put(job.id, job).pure[F]
       resp    <- Created(job)
     } yield resp
   }
@@ -62,12 +65,15 @@ class JobRoutes[F[_]: Concurrent: Logger] private extends Http4sDsl[F] {
       jobsDatabase.get(id) match {
         case Some(job) =>
           for {
-            _       <- (println("Updating job info")).pure[F]
-            jobInfo <- req.as[JobInfo]
-            _       <- (println(jobInfo)).pure[F]
+            _       <- Logger[F].info(s"Updating job $id")
+            jobInfo <- req.as[JobInfo].logError(e => s"Error parsing job info: $e")
+            _       <- Logger[F].info(s"Job info: $jobInfo")
             updated <- job.copy(jobInfo = jobInfo).pure[F]
-            _       <- jobsDatabase.update(id, updated).pure[F]
-            resp    <- Ok(updated)
+            _ <- Logger[F].info(
+              s"Updated job: ${updated.id} ${updated.date} ${updated.ownerEmail} ${updated.jobInfo} ${updated.active}"
+            )
+            _    <- jobsDatabase.update(id, updated).pure[F]
+            resp <- Ok(updated)
           } yield resp
         case None => NotFound(FailureResponse(s"Job $id not found"))
       }
