@@ -4,6 +4,7 @@ import org.http4s.dsl.Http4sDsl
 import org.http4s.HttpRoutes
 import cats.Monad
 import org.http4s.server.Router
+import org.typelevel.log4cats.Logger
 
 class HealthRoutes[F[_]: Monad] private extends Http4sDsl[F] {
 
