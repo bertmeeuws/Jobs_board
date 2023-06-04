@@ -9,7 +9,6 @@ import doobie.*
 import doobie.util.*
 import doobie.postgres.implicits.*
 import cats.effect.MonadCancelThrow
-import cats.effect.IO
 
 // Core is the same as algebra
 trait Jobs[F[_]] {
@@ -96,14 +95,24 @@ class LiveJobs[F[_]: MonadCancelThrow] private (xa: Transactor[F]) extends Jobs[
       .transact(xa)
 
   def update(id: UUID, jobInfo: JobInfo) =
-    IO.println("Inside update", id, jobInfo)
     sql"""
       UPDATE jobs
-      SET
-      company = 'dssdqsqdqsd',
-      title = 'dssdqsqdqsd'
+      SET 
+        company = ${jobInfo.company},
+        title = ${jobInfo.title},
+        description = ${jobInfo.description},
+        externalurl = ${jobInfo.externalUrl},
+        salarylo = ${jobInfo.salaryLo},
+        salaryhi = ${jobInfo.salaryHi},
+        currency = ${jobInfo.currency},
+        remote = ${jobInfo.remote},
+        location = ${jobInfo.location},
+        country = ${jobInfo.country},
+        tags = ${jobInfo.tags},
+        image = ${jobInfo.image},
+        seniority = ${jobInfo.seniority},
+        other = ${jobInfo.other}
       WHERE id = ${id}
-      RETURNING id"
         """.update.run
       .transact(xa)
       .flatMap(_ => find(id))
