@@ -9,30 +9,198 @@ import doobie.*
 import doobie.util.*
 import doobie.postgres.implicits.*
 import cats.effect.MonadCancelThrow
+import cats.effect.IO
 
 // Core is the same as algebra
 trait Jobs[F[_]] {
   def create(ownerEmail: String, jobInfo: JobInfo): F[UUID]
-  def update(id: String, jobInfo: JobInfo): F[Option[Job]]
-  def find(id: String): F[Option[Job]]
-  def delete(id: String): F[Int]
+  def update(id: UUID, jobInfo: JobInfo): F[Option[Job]]
+  def find(id: UUID): F[Option[Job]]
+  def delete(id: UUID): F[Int]
   def findAll(): F[List[Job]]
 }
 
 class LiveJobs[F[_]: MonadCancelThrow] private (xa: Transactor[F]) extends Jobs[F] {
   def create(ownerEmail: String, jobInfo: JobInfo): F[UUID] =
-    sql"INSERT INTO jobs (id, date, owner_email, job_info, active) VALUES (${UUID
-        .randomUUID()}, ${System.currentTimeMillis()}, $ownerEmail, $jobInfo, true) RETURNING id)"
-      .query[UUID]
-      .unique
+    sql"""
+    INSERT INTO jobs(
+      date,
+      owneremail,
+      company,
+      title,
+      description,
+      externalurl,
+      salarylo,
+      salaryhi,
+      currency,
+      remote,
+      location,
+      country,
+      tags,
+      image,
+      seniority,
+      other,
+      active
+    ) VALUES (
+      ${System.currentTimeMillis()},
+      $ownerEmail,
+      ${jobInfo.company},
+      ${jobInfo.title},
+      ${jobInfo.description},
+      ${jobInfo.externalUrl},
+      ${jobInfo.salaryLo},
+      ${jobInfo.salaryHi},
+      ${jobInfo.currency},
+      ${jobInfo.remote},
+      ${jobInfo.location},
+      ${jobInfo.country},
+      ${jobInfo.tags},
+      ${jobInfo.image},
+      ${jobInfo.seniority},
+      ${jobInfo.other},
+      false
+    )
+    """.update
+      .withUniqueGeneratedKeys[UUID]("id")
       .transact(xa)
-  def update(id: String, jobInfo: JobInfo): F[Option[Job]] = ???
-  def find(id: String): F[Option[Job]]                     = ???
-  def delete(id: String): F[Int]                           = ???
-  def findAll(): F[List[Job]]                              = ???
+
+  def find(id: UUID): F[Option[Job]] =
+    sql"""
+      SELECT 
+        id,
+        date,
+        ownerEmail,
+        company,
+        title,
+        description,
+        externalUrl,
+        salarylo,
+        salaryhi,
+        currency,
+        remote,
+        location,
+        country,
+        tags,
+        image,
+        seniority,
+        other,
+        active
+      FROM jobs WHERE id = $id
+    """
+      .query[Job]
+      .option
+      .transact(xa)
+
+  def delete(id: UUID): F[Int] =
+    sql"DELETE FROM jobs WHERE id = $id".update.run
+      .transact(xa)
+
+  def update(id: UUID, jobInfo: JobInfo) =
+    IO.println("Inside update", id, jobInfo)
+    sql"""
+      UPDATE jobs
+      SET
+      company = 'dssdqsqdqsd',
+      title = 'dssdqsqdqsd'
+      WHERE id = ${id}
+      RETURNING id"
+        """.update.run
+      .transact(xa)
+      .flatMap(_ => find(id))
+
+  def findAll(): F[List[Job]] =
+    sql"""SELECT 
+      id,
+      date,
+      owneremail,
+      company,
+      title,
+      description,
+      externalUrl,
+      salarylo,
+      salaryhi,
+      currency,
+      remote,
+      location,
+      country,
+      tags,
+      image,
+      seniority,
+      other,
+      active
+    FROM jobs"""
+      .query[Job]
+      .to[List]
+      .transact(xa)
 }
 
 object LiveJobs {
+  given jobRead: Read[Job] = Read[
+    (
+        UUID,
+        Long,
+        String,
+        String,
+        String,
+        String,
+        String,
+        Option[Int],
+        Option[Int],
+        Option[String],
+        Boolean,
+        String,
+        Option[String],
+        Option[List[String]],
+        Option[String],
+        Option[String],
+        Option[String],
+        Boolean
+    )
+  ].map {
+    case (
+          id: UUID,
+          date: Long,
+          ownerEmail: String,
+          company: String,
+          title: String,
+          description: String,
+          externalUrl: String,
+          salaryLo: Option[Int] @unchecked,
+          salaryHi: Option[Int] @unchecked,
+          currency: Option[String] @unchecked,
+          remote: Boolean,
+          location: String,
+          country: Option[String] @unchecked,
+          tags: Option[List[String]] @unchecked,
+          image: Option[String] @unchecked,
+          seniority: Option[String] @unchecked,
+          other: Option[String] @unchecked,
+          active: Boolean
+        ) =>
+      Job(
+        id = id,
+        date = date,
+        ownerEmail = ownerEmail,
+        JobInfo(
+          company = company,
+          title = title,
+          description = description,
+          externalUrl = externalUrl,
+          salaryLo = salaryLo,
+          salaryHi = salaryHi,
+          currency = currency,
+          remote = remote,
+          location = location,
+          country = country,
+          tags = tags,
+          image = image,
+          seniority = seniority,
+          other = other
+        ),
+        active = active
+      )
+  }
+
   def apply[F[_]: MonadCancelThrow](xa: Transactor[F]): F[LiveJobs[F]] =
     new LiveJobs[F](xa).pure[F]
 }

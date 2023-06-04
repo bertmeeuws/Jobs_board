@@ -19,22 +19,29 @@ import cats.effect.*
 
 import org.typelevel.log4cats.Logger
 import org.checkerframework.checker.units.qual.s
+import com.bmmedia.jobsboard.core.Jobs
 
-class JobRoutes[F[_]: Concurrent: Logger] private extends Http4sDsl[F] {
-
-  private val jobsDatabase = mutable.Map[UUID, Job]()
+class JobRoutes[F[_]: Concurrent: Logger] private (jobsRepository: Jobs[F]) extends Http4sDsl[F] {
 
   // Get all jobs
   private val allJobsRoute: HttpRoutes[F] = HttpRoutes.of[F] { case GET -> Root =>
-    Ok(jobsDatabase.values)
+    for {
+      _    <- Logger[F].info("Getting all jobs")
+      jobs <- jobsRepository.findAll()
+      resp <- Ok(jobs)
+    } yield resp
   }
 
   // Get job by id
   private val findJobRoute: HttpRoutes[F] = HttpRoutes.of[F] { case GET -> Root / UUIDVar(id) =>
-    jobsDatabase.get(id) match {
-      case Some(job) => Ok(job)
-      case None      => NotFound(FailureResponse(s"Job $id not found"))
-    }
+    for {
+      _   <- Logger[F].info(s"Getting job $id")
+      job <- jobsRepository.find(id)
+      response <- job match {
+        case Some(job) => Ok(job)
+        case None      => NotFound(FailureResponse(s"Job $id not found"))
+      }
+    } yield response
   }
 
   private def createJob(jobInfo: JobInfo): F[Job] =
@@ -54,26 +61,32 @@ class JobRoutes[F[_]: Concurrent: Logger] private extends Http4sDsl[F] {
       jobInfo <- req.as[JobInfo].logError(e => s"Error parsing job info: $e")
       _       <- Logger[F].info(s"Job info: $jobInfo")
       job     <- createJob(jobInfo)
-      _       <- jobsDatabase.put(job.id, job).pure[F]
-      resp    <- Created(job)
+      _       <- Logger[F].info("Job created")
+      uuid    <- jobsRepository.create(job.ownerEmail, jobInfo)
+      _ <- Logger[F].info(
+        s"Created job: ${uuid}"
+      )
+      resp <- Ok(uuid)
     } yield resp
   }
 
   // Update jobs/uuid {job}
   private val updateJobRoute: HttpRoutes[F] = HttpRoutes.of[F] {
     case req @ PUT -> Root / UUIDVar(id) =>
-      jobsDatabase.get(id) match {
+      jobsRepository.find(id).flatMap {
         case Some(job) =>
           for {
             _       <- Logger[F].info(s"Updating job $id")
             jobInfo <- req.as[JobInfo].logError(e => s"Error parsing job info: $e")
-            _       <- Logger[F].info(s"Job info: $jobInfo")
-            updated <- job.copy(jobInfo = jobInfo).pure[F]
+            _       <- Logger[F].info(s"Found job with info: $jobInfo")
+            updated <- jobsRepository.update(id, jobInfo)
             _ <- Logger[F].info(
-              s"Updated job: ${updated.id} ${updated.date} ${updated.ownerEmail} ${updated.jobInfo} ${updated.active}"
+              s"Updated job: ${updated}"
             )
-            _    <- jobsDatabase.update(id, updated).pure[F]
-            resp <- Ok(updated)
+            resp <- updated match {
+              case Some(job) => Ok(job)
+              case None      => NotFound(FailureResponse(s"Job $id could not be updated"))
+            }
           } yield resp
         case None => NotFound(FailureResponse(s"Job $id not found"))
       }
@@ -82,14 +95,16 @@ class JobRoutes[F[_]: Concurrent: Logger] private extends Http4sDsl[F] {
   // Delete job
   private val deleteJobRoute: HttpRoutes[F] = HttpRoutes.of[F] {
     case DELETE -> Root / UUIDVar(id) =>
-      jobsDatabase.get(id) match {
-        case Some(_) =>
-          for {
-            _    <- (println("Deleting job")).pure[F]
-            _    <- jobsDatabase.remove(id).pure[F]
-            resp <- Ok(s"Job $id deleted")
-          } yield resp
-        case None => NotFound(FailureResponse(s"Job $id not found"))
+      jobsRepository.find(id).flatMap {
+        {
+          case Some(job) =>
+            for {
+              _    <- Logger[F].info(s"Deleting job $id")
+              _    <- jobsRepository.delete(job.id).pure[F]
+              resp <- Ok(s"Job $id deleted")
+            } yield resp
+          case None => NotFound(FailureResponse(s"Job $id not found"))
+        }
       }
   }
 
@@ -99,5 +114,5 @@ class JobRoutes[F[_]: Concurrent: Logger] private extends Http4sDsl[F] {
 }
 
 object JobRoutes {
-  def apply[F[_]: Concurrent: Logger] = new JobRoutes[F]
+  def apply[F[_]: Concurrent: Logger](jobsRepository: Jobs[F]) = new JobRoutes[F](jobsRepository)
 }

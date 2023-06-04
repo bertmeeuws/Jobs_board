@@ -2,7 +2,7 @@ CREATE DATABASE board;
 \c board
 
 CREATE TABLE jobs(
-    id uuid DEFAULT gen_random_uuid(),
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     date bigint NOT NULL,
     ownerEmail VARCHAR(255) NOT NULL,
     active BOOLEAN DEFAULT TRUE,
@@ -21,6 +21,3 @@ CREATE TABLE jobs(
     seniority VARCHAR(255) NOT NULL,
     other TEXT
 );
-
-ALTER TABLE jobs
-ADD CONSTRAINT pk_jobs PRIMARY KEY (id);
