@@ -10,6 +10,10 @@ import org.scalatest.matchers.should.Matchers
 import com.bmmedia.jobsboard.core.*
 import com.bmmedia.jobsboard.domain.job.*
 import java.util.UUID
+import com.bmmedia.jobsboard.http.routes.*
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
+import org.http4s.HttpRoutes
 
 class JobRoutesSpec
     extends AsyncFreeSpec
@@ -28,5 +32,9 @@ class JobRoutesSpec
     override def delete(id: UUID): IO[Int] = IO.pure(1)
 
     override def findAll(): IO[List[Job]] = IO.pure(List(AwesomeJob))
+
+    given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
+
+    val jobRoutes: HttpRoutes[IO] = JobRoutes[IO](jobs).routes
   }
 }
