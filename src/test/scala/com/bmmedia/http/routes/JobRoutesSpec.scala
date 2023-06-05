@@ -54,6 +54,30 @@ class JobRoutesSpec
         retrieved shouldBe AwesomeJob
       }
     }
+
+    "should create a job" in {
+      for {
+        response <- jobRoutes.orNotFound.run(
+          Request(POST, uri"/jobs").withEntity(RockTheJvmNewJob)
+        )
+        retrieved <- response.as[UUID]
+      } yield {
+        response.status shouldBe Ok
+        retrieved shouldBe NewJobUuid
+      }
+    }
+
+    "should delete a job" in {
+      for {
+        response <- jobRoutes.orNotFound.run(
+          Request(DELETE, uri"/jobs/843df718-ec6e-4d49-9289-f799c0f40064")
+        )
+        retrieved <- response.as[String]
+      } yield {
+        response.status shouldBe Ok
+        retrieved shouldBe "Job 843df718-ec6e-4d49-9289-f799c0f40064 deleted"
+      }
+    }
   }
 
 }

@@ -90,6 +90,7 @@ trait JobFixture {
     AwesomeJob.copy(jobInfo = AwesomeJob.jobInfo.copy(company = "RockTheJvm"))
 
   val NewJobUuid = UUID.fromString("efcd2a64-4463-453a-ada8-b1bae1db4377")
+
   val AwesomeNewJob = JobInfo(
     "Awesome Company",
     "Tech Lead",
