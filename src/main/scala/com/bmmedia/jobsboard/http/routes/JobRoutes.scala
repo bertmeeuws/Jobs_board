@@ -12,7 +12,6 @@ import cats.implicits._
 import scala.collection.mutable
 import java.util.UUID
 import com.bmmedia.jobsboard.domain.job.*
-import com.bmmedia.jobsboard.domain.job
 import com.bmmedia.jobsboard.http.responses.*
 import com.bmmedia.jobsboard.domain.job.*
 import cats.effect.*
@@ -20,8 +19,11 @@ import cats.effect.*
 import org.typelevel.log4cats.Logger
 import org.checkerframework.checker.units.qual.s
 import com.bmmedia.jobsboard.core.Jobs
+import com.bmmedia.jobsboard.validation.syntax.*
+import cats.data.Validated
 
-class JobRoutes[F[_]: Concurrent: Logger] private (jobsRepository: Jobs[F]) extends Http4sDsl[F] {
+class JobRoutes[F[_]: Concurrent: Logger] private (jobsRepository: Jobs[F])
+    extends HttpValidationDsl[F] {
 
   // Get all jobs
   private val allJobsRoute: HttpRoutes[F] = HttpRoutes.of[F] { case GET -> Root =>
@@ -56,18 +58,23 @@ class JobRoutes[F[_]: Concurrent: Logger] private (jobsRepository: Jobs[F]) exte
   import com.bmmedia.jobsboard.logging.syntax.*
 
   private val createJobRoute: HttpRoutes[F] = HttpRoutes.of[F] { case req @ POST -> Root =>
-    for {
-      _       <- Logger[F].info(s"Creating job")
-      jobInfo <- req.as[JobInfo].logError(e => s"Error parsing job info: $e")
-      _       <- Logger[F].info(s"Job info: $jobInfo")
-      job     <- createJob(jobInfo)
-      _       <- Logger[F].info("Job created")
-      uuid    <- jobsRepository.create(job.ownerEmail, jobInfo)
-      _ <- Logger[F].info(
-        s"Created job: ${uuid}"
-      )
-      resp <- Ok(uuid)
-    } yield resp
+    req.validate[JobInfo] { jobInfo =>
+      for {
+        _ <- Logger[F].info(s"Creating job")
+        jobInfo <- req
+          .as[JobInfo]
+        jobInfo <- req.as[JobInfo].logError(e => s"Error parsing job info: $e")
+        _       <- Logger[F].info(s"Job info: $jobInfo")
+        job     <- createJob(jobInfo)
+        _       <- Logger[F].info("Job created")
+        uuid    <- jobsRepository.create(job.ownerEmail, jobInfo)
+        _ <- Logger[F].info(
+          s"Created job: ${uuid}"
+        )
+        resp <- Ok(uuid)
+      } yield resp
+    }
+
   }
 
   // Update jobs/uuid {job}

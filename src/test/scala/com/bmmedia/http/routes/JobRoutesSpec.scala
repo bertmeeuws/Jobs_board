@@ -18,6 +18,7 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.http4s.HttpRoutes
 import org.http4s.Request
 import org.http4s.implicits.*
+import org.http4s.Status
 
 class JobRoutesSpec
     extends AsyncFreeSpec
@@ -62,7 +63,7 @@ class JobRoutesSpec
         )
         retrieved <- response.as[UUID]
       } yield {
-        response.status shouldBe Ok
+        response.status shouldBe Status.Ok
         retrieved shouldBe NewJobUuid
       }
     }
@@ -74,7 +75,7 @@ class JobRoutesSpec
         )
         retrieved <- response.as[String]
       } yield {
-        response.status shouldBe Ok
+        response.status shouldBe Status.Ok
         retrieved shouldBe "Job 843df718-ec6e-4d49-9289-f799c0f40064 deleted"
       }
     }
