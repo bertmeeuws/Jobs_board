@@ -5,10 +5,12 @@ import java.util.UUID
 import cats.*
 import cats.implicits.*
 import doobie.implicits.*
+import cats.data.*
 import doobie.*
 import doobie.util.*
 import doobie.postgres.implicits.*
 import cats.effect.MonadCancelThrow
+import com.bmmedia.jobsboard.domain.pagination.Pagination
 
 // Core is the same as algebra
 trait Jobs[F[_]] {
@@ -17,10 +19,11 @@ trait Jobs[F[_]] {
   def find(id: UUID): F[Option[Job]]
   def delete(id: UUID): F[Int]
   def findAll(): F[List[Job]]
+  def findAll(pagination: Pagination, filters: JobFilter): F[List[Job]]
 }
 
 class LiveJobs[F[_]: MonadCancelThrow] private (xa: Transactor[F]) extends Jobs[F] {
-  def create(ownerEmail: String, jobInfo: JobInfo): F[UUID] =
+  override def create(ownerEmail: String, jobInfo: JobInfo): F[UUID] =
     sql"""
     INSERT INTO jobs(
       date,
@@ -63,7 +66,7 @@ class LiveJobs[F[_]: MonadCancelThrow] private (xa: Transactor[F]) extends Jobs[
       .withUniqueGeneratedKeys[UUID]("id")
       .transact(xa)
 
-  def find(id: UUID): F[Option[Job]] =
+  override def find(id: UUID): F[Option[Job]] =
     sql"""
       SELECT 
         id,
@@ -90,11 +93,11 @@ class LiveJobs[F[_]: MonadCancelThrow] private (xa: Transactor[F]) extends Jobs[
       .option
       .transact(xa)
 
-  def delete(id: UUID): F[Int] =
+  override def delete(id: UUID): F[Int] =
     sql"DELETE FROM jobs WHERE id = $id".update.run
       .transact(xa)
 
-  def update(id: UUID, jobInfo: JobInfo) =
+  override def update(id: UUID, jobInfo: JobInfo) =
     sql"""
       UPDATE jobs
       SET 
@@ -117,7 +120,53 @@ class LiveJobs[F[_]: MonadCancelThrow] private (xa: Transactor[F]) extends Jobs[
       .transact(xa)
       .flatMap(_ => find(id))
 
-  def findAll(): F[List[Job]] =
+  override def findAll(pagination: Pagination, filters: JobFilter): F[List[Job]] = {
+    val fragment = fr"""SELECT 
+      id,
+      date,
+      owneremail,
+      company,
+      title,
+      description,
+      externalUrl,
+      salarylo,
+      salaryhi,
+      currency,
+      remote,
+      location,
+      country,
+      tags,
+      image,
+      seniority,
+      other,
+      active"""
+
+    val fragment2 = fr"FROM jobs"
+
+    val Pagination(offset, limit)                                             = pagination
+    val JobFilter(companies, locations, countries, seniorities, tags, remote) = filters
+
+    val f1 = companies.toNel.map(companies => Fragments.in(fr"company", companies))
+    val f2 = locations.toNel.map(locations => Fragments.in(fr"location", locations))
+    val f3 = countries.toNel.map(countries => Fragments.in(fr"country", countries))
+    val f4 = seniorities.toNel.map(seniorities => Fragments.in(fr"seniority", seniorities))
+    val f5 =
+      tags.toNel.map(tagss => Fragments.or(tagss.toList.map(tag => fr"$tag=any(tags)"): _*))
+
+    val f6 = remote.some.map(remote => fr"remote=$remote")
+
+    val whereClause = Fragments.whereAndOpt(f1, f2, f3, f4, f5, f6)
+
+    val query =
+      (fragment ++ fragment2 ++ whereClause ++ fr"ORDER BY date DESC LIMIT $limit OFFSET $offset")
+        .query[Job]
+        .to[List]
+        .transact(xa)
+
+    query
+  }
+
+  override def findAll(): F[List[Job]] =
     sql"""SELECT 
       id,
       date,
