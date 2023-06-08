@@ -19,6 +19,7 @@ import org.http4s.HttpRoutes
 import org.http4s.Request
 import org.http4s.implicits.*
 import org.http4s.Status
+import com.bmmedia.jobsboard.domain.pagination.Pagination
 
 class JobRoutesSpec
     extends AsyncFreeSpec
@@ -37,6 +38,8 @@ class JobRoutesSpec
     override def delete(id: UUID): IO[Int] = IO.pure(1)
 
     override def findAll(): IO[List[Job]] = IO.pure(List(AwesomeJob))
+    override def findAll(pagination: Pagination, filters: JobFilter): IO[List[Job]] =
+      IO.pure(List(AwesomeJob))
   }
 
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
