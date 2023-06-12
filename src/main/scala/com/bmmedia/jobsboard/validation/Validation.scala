@@ -6,7 +6,6 @@ import cats.data.Validated.*
 import cats.*
 import cats.syntax.all.*
 import com.bmmedia.jobsboard.domain.user.User
-import com.bmmedia.jobsboard.config.PostgresConfig.password
 
 object Validation {
 
@@ -98,8 +97,7 @@ object Validation {
         password,
         role,
         company,
-        url,
-        createdAt
+        url
       ) = user
 
       val validatedFirstname = validationRequired(firstName)(_.nonEmpty)
@@ -114,8 +112,7 @@ object Validation {
         validatedPassword,
         role.validNel,
         company.validNel,
-        url.validNel,
-        createdAt.validNel
+        url.validNel
       ).mapN(User.apply)
     }
   }

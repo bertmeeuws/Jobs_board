@@ -12,6 +12,7 @@ import com.bmmedia.jobsboard.core.Users
 import com.bmmedia.jobsboard.domain.user.User
 import org.http4s.HttpRoutes
 import com.bmmedia.jobsboard.validation.syntax.*
+import org.http4s.server.Router
 
 class UserRoutes[F[_]: Concurrent: Logger] private (userRepository: Users[F])
     extends HttpValidationDsl[F] {
@@ -29,6 +30,14 @@ class UserRoutes[F[_]: Concurrent: Logger] private (userRepository: Users[F])
         } yield resp
       }
     }
-
   }
+
+  val routes = Router(
+    "/user" -> (createUser)
+  )
+}
+
+object UserRoutes {
+  def apply[F[_]: Concurrent: Logger](userRepository: Users[F]): UserRoutes[F] =
+    new UserRoutes[F](userRepository)
 }
