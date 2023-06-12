@@ -5,6 +5,8 @@ import com.bmmedia.jobsboard.domain.job.*
 import cats.data.Validated.*
 import cats.*
 import cats.syntax.all.*
+import com.bmmedia.jobsboard.domain.user.User
+import com.bmmedia.jobsboard.config.PostgresConfig.password
 
 object Validation {
 
@@ -33,10 +35,16 @@ object Validation {
     if (url(field)) field.validNel
     else UrlFormatIsNotCorrect(s"$field is not a valid url").invalidNel
 
+    // Todo - improve this
   def isEmailValid(email: String): ValidationResult[String] =
     // Could be improved with regex
     if (email.contains("@")) email.validNel
     else EmailFormatIsIncorrect(s"$email is not a valid email").invalidNel
+
+    // Todo - improve this, turn into opaque type
+  def validatePassword(password: String): ValidationResult[String] =
+    if (password.length > 8) password.validNel
+    else FieldRequired(s"$password is not a valid password").invalidNel
 
   given jobInfoValidator: Validator[JobInfo] = new Validator[JobInfo] {
     def validate(jobInfo: JobInfo): ValidationResult[JobInfo] = {
@@ -78,6 +86,37 @@ object Validation {
         seniority.validNel,
         other.validNel
       ).mapN(JobInfo.apply)
+    }
+  }
+
+  given userValidator: Validator[User] = new Validator[User] {
+    def validate(user: User): ValidationResult[User] = {
+      val User(
+        email,
+        firstName,
+        lastName,
+        password,
+        role,
+        company,
+        url,
+        createdAt
+      ) = user
+
+      val validatedFirstname = validationRequired(firstName)(_.nonEmpty)
+      val validatedLastName  = validationRequired(lastName)(_.nonEmpty)
+      val validatedEmail     = isEmailValid(email)
+      val validatedPassword  = validatePassword(password)
+
+      (
+        validatedEmail,
+        validatedFirstname,
+        validatedLastName,
+        validatedPassword,
+        role.validNel,
+        company.validNel,
+        url.validNel,
+        createdAt.validNel
+      ).mapN(User.apply)
     }
   }
 }
