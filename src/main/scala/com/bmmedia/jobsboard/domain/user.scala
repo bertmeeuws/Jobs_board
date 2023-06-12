@@ -8,8 +8,7 @@ object user {
       password: String,
       role: Role,
       company: Option[String],
-      url: Option[String],
-      createdAt: Long
+      url: Option[String]
   )
 
   enum Role {

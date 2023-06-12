@@ -19,17 +19,17 @@ trait Users[F[_]] {
 
 class LiveUsers[F[_]: MonadCancelThrow] private (xa: Transactor[F]) extends Users[F] {
   override def create(user: User): F[User] = {
-    val User(email, firstName, lastName, password, company, role, url, createdAt) = user
+    val User(email, firstName, lastName, password, company, role, url) = user
 
     sql"""
-    INSERT INTO public.users (email, firstName, lastName, password, company, role, createdAt) VALUES ($email,$firstName, $lastName, $password, ${company.toString}, $role, ${System
+    INSERT INTO public.users (email, firstName, lastName, password, company, role) VALUES ($email,$firstName, $lastName, $password, ${company.toString}, $role, ${System
         .currentTimeMillis()})""".update.run
       .transact(xa)
       .as(user)
   }
 
   override def update(user: User): F[Option[User]] = {
-    val User(email, firstName, lastName, password, company, role, url, createdAt) = user
+    val User(email, firstName, lastName, password, company, role, url) = user
 
     sql"""
     UPDATE public.users SET firstName = $firstName, lastName = $lastName, password = $password, company = ${company.toString}, role = $role WHERE email = $email""".update.run
@@ -40,4 +40,8 @@ class LiveUsers[F[_]: MonadCancelThrow] private (xa: Transactor[F]) extends User
     sql"""SELECT * FROM public.users WHERE email = $email""".query[User].option.transact(xa)
   override def delete(email: String): F[Int] =
     sql"""DELETE FROM public.users WHERE email = $email""".update.run.transact(xa)
+}
+
+object LiveUsers {
+  def apply[F[_]: MonadCancelThrow](xa: Transactor[F]) = new LiveUsers[F](xa).pure[F]
 }
