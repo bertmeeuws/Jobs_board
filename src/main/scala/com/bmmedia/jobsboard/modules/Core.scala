@@ -9,12 +9,12 @@ import doobie.util.transactor.Transactor
 final class Core[F[_]] private (val jobs: Jobs[F], val users: Users[F])
 
 object Core {
-  def apply[F[_]: Async](xa: Transactor[F]) =
-    Resource
-      .eval(
-        (LiveJobs[F](xa), LiveUsers[F](xa))
-      )
-      .map { case (jobs: Jobs[F], users: Users[F]) =>
-        new Core[F](jobs, users)
-      }
+  def apply[F[_]: Async](xa: Transactor[F]) = {
+    val coreF = for {
+      jobs  <- LiveJobs[F](xa)
+      users <- LiveUsers[F](xa)
+    } yield new Core[F](jobs, users)
+
+    Resource.eval(coreF)
+  }
 }

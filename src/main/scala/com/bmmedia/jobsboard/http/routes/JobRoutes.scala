@@ -83,7 +83,6 @@ class JobRoutes[F[_]: Concurrent: Logger] private (jobsRepository: Jobs[F])
           resp <- Ok(uuid)
         } yield resp
       }
-
   }
 
   // Update jobs/uuid {job}
