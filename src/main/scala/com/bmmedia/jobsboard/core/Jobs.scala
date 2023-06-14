@@ -259,6 +259,5 @@ object LiveJobs {
       )
   }
 
-  def apply[F[_]: MonadCancelThrow](xa: Transactor[F]): F[LiveJobs[F]] =
-    new LiveJobs[F](xa).pure[F]
+  def apply[F[_]: MonadCancelThrow](xa: Transactor[F]) = new LiveJobs[F](xa).pure[F]
 }
