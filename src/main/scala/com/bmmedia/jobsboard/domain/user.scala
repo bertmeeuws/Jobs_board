@@ -15,4 +15,6 @@ object user {
     case Admin
     case User
   }
+
+  final case class Credentials(email: String, password: String)
 }
