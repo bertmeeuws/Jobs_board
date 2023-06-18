@@ -5,7 +5,8 @@ import com.bmmedia.jobsboard.domain.job.*
 import cats.data.Validated.*
 import cats.*
 import cats.syntax.all.*
-import com.bmmedia.jobsboard.domain.user.User
+import com.bmmedia.jobsboard.domain.user.{User, Credentials}
+import com.bmmedia.jobsboard.domain.auth.UserRegister
 
 object Validation {
 
@@ -89,6 +90,7 @@ object Validation {
   }
 
   given userValidator: Validator[User] = new Validator[User] {
+
     def validate(user: User): ValidationResult[User] = {
       val User(
         email,
@@ -116,4 +118,47 @@ object Validation {
       ).mapN(User.apply)
     }
   }
+
+  given userRegisterValidator: Validator[UserRegister] = new Validator[UserRegister] {
+
+    def validate(user: UserRegister): ValidationResult[UserRegister] = {
+      val UserRegister(
+        email,
+        firstName,
+        lastName,
+        password,
+        company,
+        url
+      ) = user
+
+      val validatedFirstname = validationRequired(firstName)(_.nonEmpty)
+      val validatedLastName  = validationRequired(lastName)(_.nonEmpty)
+      val validatedEmail     = isEmailValid(email)
+      val validatedPassword  = validatePassword(password)
+
+      (
+        validatedEmail,
+        validatedFirstname,
+        validatedLastName,
+        validatedPassword,
+        company.validNel,
+        url.validNel
+      ).mapN(UserRegister.apply)
+    }
+  }
+
+  given credentialsValidator: Validator[Credentials] = new Validator[Credentials] {
+
+    def validate(credentials: Credentials): ValidationResult[Credentials] = {
+      val Credentials(email, password) = credentials
+
+      val validatedEmail = isEmailValid(email)
+
+      (
+        validatedEmail,
+        password.validNel
+      ).mapN(Credentials.apply)
+    }
+  }
+
 }

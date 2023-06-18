@@ -19,11 +19,28 @@ trait Users[F[_]] {
 
 class LiveUsers[F[_]: MonadCancelThrow] private (xa: Transactor[F]) extends Users[F] {
   override def create(user: User): F[User] = {
-    val User(email, firstName, lastName, password, company, role, url) = user
+    val User(email, firstName, lastName, password, role, company, url) = user
 
-    sql"""
-    INSERT INTO public.users (email, firstName, lastName, password, company, role) VALUES ($email,$firstName, $lastName, $password, ${company.toString}, $role, ${System
-        .currentTimeMillis()})""".update.run
+    val fragment = sql"""
+      INSERT INTO public.users (
+      email,
+      firstname, 
+      lastname, 
+      password, 
+      company,
+      role,
+      createdat) VALUES (
+      $email,
+      $firstName, 
+      $lastName, 
+      $password, 
+      ${company.getOrElse("")},
+      USER,
+      ${System.currentTimeMillis()}
+      )
+    """
+
+    fragment.update.run
       .transact(xa)
       .as(user)
   }

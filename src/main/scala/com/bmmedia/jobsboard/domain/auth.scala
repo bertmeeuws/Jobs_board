@@ -8,6 +8,8 @@ object auth {
   type HashedPassword = PHash[BCrypt]
   type Password       = String
 
+  val jwtSecret = "secret"
+
   final case class UserRegister(
       email: String,
       firstName: String,
