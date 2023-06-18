@@ -6,14 +6,15 @@ import cats.instances.*
 import com.bmmedia.jobsboard.core.*
 import doobie.util.transactor.Transactor
 
-final class Core[F[_]] private (val jobs: Jobs[F], val users: Users[F])
+final class Core[F[_]] private (val jobs: Jobs[F], val users: Users[F], val auth: Auth[F])
 
 object Core {
   def apply[F[_]: Async](xa: Transactor[F]) = {
     val coreF = for {
       jobs  <- LiveJobs[F](xa)
       users <- LiveUsers[F](xa)
-    } yield new Core[F](jobs, users)
+      auth  <- LiveAuth[F](users)
+    } yield new Core[F](jobs, users, auth)
 
     Resource.eval(coreF)
   }
