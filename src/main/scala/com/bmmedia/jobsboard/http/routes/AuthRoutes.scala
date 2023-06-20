@@ -25,9 +25,11 @@ class AuthRoutes[F[_]: Concurrent: Logger] private (
     case req @ POST -> Root / "login" => {
       req.validate[Credentials] { user =>
         for {
-          _      <- Logger[F].info(s"Logging in user $user")
           result <- auth.login(user)
-          resp   <- Ok(result)
+          resp <- result match {
+            case Some(token) => Ok(token)
+            case None        => BadRequest("Invalid credentials")
+          }
         } yield resp
       }
     }
@@ -37,14 +39,13 @@ class AuthRoutes[F[_]: Concurrent: Logger] private (
     case req @ POST -> Root / "register" => {
       req.validate[UserRegister] { userData =>
         for {
-          _      <- Logger[F].info(s"Registering new user")
+          _      <- Logger[F].info(s"Registering new user!!!")
           result <- auth.register(userData)
-          _ <- result match {
-            case Some(_) => Logger[F].info(s"Registered new user")
-            case None    => Logger[F].info(s"Failed to register new user")
+          _      <- Logger[F].info(s"Result: $result")
+          resp <- result match {
+            case Some(token) => Ok(token)
+            case None        => BadRequest("User already exists")
           }
-          _    <- Logger[F].info(s"Registered new user")
-          resp <- Ok(result)
         } yield resp
       }
     }

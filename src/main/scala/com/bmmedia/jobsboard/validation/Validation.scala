@@ -98,8 +98,7 @@ object Validation {
         lastName,
         password,
         role,
-        company,
-        url
+        company
       ) = user
 
       val validatedFirstname = validationRequired(firstName)(_.nonEmpty)
@@ -113,8 +112,7 @@ object Validation {
         validatedLastName,
         validatedPassword,
         role.validNel,
-        company.validNel,
-        url.validNel
+        company.validNel
       ).mapN(User.apply)
     }
   }

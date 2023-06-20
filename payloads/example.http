@@ -13,3 +13,20 @@ Content-Length: 162
     "tags": [],
     "remote": true
 }
+
+
+
+
+POST /api/auth/register HTTP/1.1
+Host: localhost:8020
+Content-Type: application/json
+Content-Length: 156
+
+{
+    "email": "examplee@example.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "password": "password123",
+    "company": null,
+    "url": null
+}
