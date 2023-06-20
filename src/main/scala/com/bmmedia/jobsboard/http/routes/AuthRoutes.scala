@@ -13,13 +13,21 @@ import com.bmmedia.jobsboard.domain.user.Credentials
 import com.bmmedia.jobsboard.core.Auth
 import com.bmmedia.jobsboard.domain.auth.UserRegister
 import org.http4s.server.Router
+import tsec.authentication._
+import tsec.common.SecureRandomId
+import com.bmmedia.jobsboard.domain.user.User
+import com.bmmedia.jobsboard.domain.security.*
 
 class AuthRoutes[F[_]: Concurrent: Logger] private (
     auth: Auth[F],
     userRepository: Users[F]
 ) extends HttpValidationDsl[F] {
-
+  import tsec.authentication._
   import com.bmmedia.jobsboard.logging.syntax.*
+
+  private val authenticator = auth.authenticator
+  private val securedHandler: SecuredRequestHandler[F, String, User, JwtToken] =
+    SecuredRequestHandler(auth.authenticator)
 
   private val login: HttpRoutes[F] = HttpRoutes.of[F] {
     case req @ POST -> Root / "login" => {
@@ -27,7 +35,7 @@ class AuthRoutes[F[_]: Concurrent: Logger] private (
         for {
           result <- auth.login(user)
           resp <- result match {
-            case Some(token) => Ok(Map("token" -> token))
+            case Some(token) => authenticator.embed(Response(Status.Ok), token)
             case None        => BadRequest(Map("error" -> "Invalid credentials"))
           }
         } yield resp
@@ -50,8 +58,25 @@ class AuthRoutes[F[_]: Concurrent: Logger] private (
     }
   }
 
+  private val changePassword: HttpRoutes[F] = HttpRoutes.of[F] {
+    case req @ PUT -> Root / "change-password" asAuthed email => {
+      req.validate[Credentials] { user =>
+        for {
+          result <- auth.changePassword(user)
+          resp <- result match {
+            case Some(token) => Ok(Map("token" -> token))
+            case None        => BadRequest(Map("error" -> "Invalid credentials"))
+          }
+        } yield resp
+      }
+    }
+  }
+
+  val authedRoutes: AuthRoutes[F]   = securedHandler.liftService(TSecAuthService(changePassword))
+  val unauthedRoutes: HttpRoutes[F] = (register <+> login)
+
   val routes: HttpRoutes[F] = Router(
-    "/auth" -> (register <+> login)
+    "/auth" -> (unauthedRoutes <+> authedRoutes)
   )
 }
 

@@ -20,6 +20,7 @@ import cats.effect.kernel.Async
 import tsec.mac.jca.HMACSHA256
 import tsec.jwt.JWTClaims
 import tsec.jws.mac.JWTMac
+import com.bmmedia.jobsboard.domain.security.*
 
 trait Auth[F[_]] {
   def login(credentials: Credentials): F[Option[String]]
@@ -27,9 +28,15 @@ trait Auth[F[_]] {
   def verifyToken(password: Password, hash: HashedPassword): F[Boolean]
   def createJWT(user: User): F[String]
   def register(registerData: UserRegister): F[Option[String]]
+  def changePassword(email: String, credentials: PasswordChange): F[Boolean]
+  val authenticator: Authenticator[F]
+
 }
 
-class LiveAuth[F[_]: Sync: Logger] private (usersRepository: Users[F]) extends Auth[F] {
+class LiveAuth[F[_]: Sync: Logger] private (
+    usersRepository: Users[F],
+    authenticator: Authenticator[F]
+) extends Auth[F] {
 
   override def login(credentials: Credentials): F[Option[String]] = for {
     _    <- Logger[F].info(s"Logging in user")
@@ -105,43 +112,44 @@ class LiveAuth[F[_]: Sync: Logger] private (usersRepository: Users[F]) extends A
     } yield {
       response
     }
+  }
 
-    /*
-    BCrypt.hashpw[F](registerData.password) flatMap { hashedPassword =>
-      {
-        Logger[F].info(hashedPassword) *> usersRepository
-          .find(registerData.email)
-          .flatMap {
-            case Some(existingUser) =>
-              Logger[F].info(s"User already exists: $existingUser") *> none[String].pure[F]
-            case None => {
-              Logger[F].info("User does not exist") *>
-                usersRepository
-                  .create(
-                    User(
-                      registerData.email,
-                      registerData.firstName,
-                      registerData.lastName,
-                      hashedPassword,
-                      Role.RECRUITER,
-                      None
-                    )
-                  )
-                  .flatMap { user =>
-                    createJWT(user).flatMap { jwt =>
-                      jwt.some.pure[F]
-                    }
+  override def changePassword(email: String, credentials: PasswordChange): F[Boolean] = {
+    for {
+      user <- usersRepository.find(credentials.email)
+      response <- user match {
+        case Some(user) => {
+          Logger[F].info(s"User found: $user") *>
+            verifyToken(credentials.oldPassword, PasswordHash(user.password)).flatMap { verified =>
+              if (verified) {
+                Logger[F].info("Password verified") *>
+                  BCrypt.hashpw[F](credentials.newPassword).flatMap { hashedPassword =>
+                    usersRepository.update(user.copy(password = hashedPassword)).as(true)
                   }
+              } else {
+                Logger[F].info("Password not verified") *> false.pure[F]
+              }
             }
-          }
+        }
+        case None => {
+          Logger[F].info("User not found") *> false.pure[F]
+        }
       }
+    } yield response
+  }
 
-    }
-     */
+  override val authenticator: Authenticator[F] = {
+    JWTAuthenticator(
+      expiryDuration = 10.minutes,
+      maxIdle = None,
+      tokenStore = authenticator.tokenStore,
+      identityStore = authenticator.identityStore,
+      signingKey = HMACSHA256.generateKey[F]
+    )
   }
 }
 
 object LiveAuth {
-  def apply[F[_]: Sync: Logger](usersRepository: Users[F]) =
+  def apply[F[_]: Sync: Logger](usersRepository: Users[F], authenticator: Authenticator[F]) =
     new LiveAuth[F](usersRepository).pure[F]
 }
