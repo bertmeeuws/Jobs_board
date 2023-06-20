@@ -35,7 +35,7 @@ class LiveUsers[F[_]: MonadCancelThrow] private (xa: Transactor[F]) extends User
       $lastName, 
       $password, 
       ${company.getOrElse("")},
-      USER,
+      $role,
       ${System.currentTimeMillis()}
       )
     """

@@ -32,23 +32,41 @@ trait Auth[F[_]] {
 class LiveAuth[F[_]: Sync: Logger] private (usersRepository: Users[F]) extends Auth[F] {
 
   override def login(credentials: Credentials): F[Option[String]] = for {
-    _    <- Logger[F].info(s"Logging in user $credentials")
-    user <- usersRepository.find(credentials.email).attempt
-    _    <- Logger[F].info(s"User $user")
-  } yield "dasokodasd".some
+    _    <- Logger[F].info(s"Logging in user")
+    user <- usersRepository.find(credentials.email)
+    response <- user match {
+      case Some(user) => {
+        Logger[F].info(s"User found: $user") *>
+          verifyToken(credentials.password, PasswordHash(user.password)).flatMap { verified =>
+            if (verified) {
+              Logger[F].info("Password verified") *>
+                createJWT(user).flatMap { jwt =>
+                  jwt.some.pure[F]
+                }
+            } else {
+              Logger[F].info("Password not verified") *> none[String].pure[F]
+            }
+          }
+      }
+      case None => {
+        Logger[F].info("User not found") *> none[String].pure[F]
+      }
+    }
+  } yield response
 
   override def logout(token: String): F[Unit] = ???
-  override def verifyToken(password: Password, token: HashedPassword): F[Boolean] = for {
-    token <- token.pure[F]
-    check <- BCrypt.checkpwBool[F]("hiThere", token)
-  } yield check
+  override def verifyToken(password: Password, token: PasswordHash[BCrypt]): F[Boolean] = for {
+    token   <- token.pure[F]
+    isValid <- BCrypt.checkpwBool[F](password, token)
+  } yield isValid
 
   override def createJWT(user: User): F[String] = {
     for {
       key <- HMACSHA256.generateKey[F]
       claims <- JWTClaims.withDuration[F](
         expiration = Some(10.minutes),
-        customFields = Seq("email" -> encodeString(user.email))
+        customFields =
+          Seq("email" -> encodeString(user.email), "role" -> encodeString(user.role.toString))
       )
       jwt <- JWTMac
         .build[F, HMACSHA256](claims, key)
@@ -59,22 +77,43 @@ class LiveAuth[F[_]: Sync: Logger] private (usersRepository: Users[F]) extends A
   override def register(registerData: UserRegister): F[Option[String]] = {
 
     for {
-      hAttempt <- BCrypt
-        .hashpw[F](registerData.password)
-        .attempt
-      _ <- println(s"Hashed password $hAttempt").pure[F]
-      _ <- Logger[F]
-        .info(s"Hashed password $hAttempt")
-      hashedPassword <- Sync[F].fromEither(hAttempt)
-      _              <- Logger[F].info(s"Hashed password $hashedPassword")
-    } yield hashedPassword
+      _              <- Logger[F].info(s"User data: $registerData")
+      hashedPassword <- BCrypt.hashpw[F](registerData.password)
+      existingUser   <- usersRepository.find(registerData.email)
+      response <- existingUser match {
+        case Some(user) => Logger[F].info(s"User already exists: $user") *> none[String].pure[F]
+        case None => {
+          Logger[F].info("User does not exist") *>
+            usersRepository
+              .create(
+                User(
+                  registerData.email,
+                  registerData.firstName,
+                  registerData.lastName,
+                  hashedPassword,
+                  Role.RECRUITER,
+                  registerData.company
+                )
+              )
+              .flatMap { user =>
+                createJWT(user).flatMap { jwt =>
+                  jwt.some.pure[F]
+                }
+              }
+        }
+      }
+    } yield {
+      response
+    }
 
+    /*
     BCrypt.hashpw[F](registerData.password) flatMap { hashedPassword =>
       {
         Logger[F].info(hashedPassword) *> usersRepository
           .find(registerData.email)
           .flatMap {
-            case Some(existingUser) => println("User does exist").pure[F] *> None.pure[F]
+            case Some(existingUser) =>
+              Logger[F].info(s"User already exists: $existingUser") *> none[String].pure[F]
             case None => {
               Logger[F].info("User does not exist") *>
                 usersRepository
@@ -96,7 +135,9 @@ class LiveAuth[F[_]: Sync: Logger] private (usersRepository: Users[F]) extends A
             }
           }
       }
+
     }
+     */
   }
 }
 
