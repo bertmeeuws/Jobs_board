@@ -5,7 +5,7 @@ import com.bmmedia.jobsboard.domain.job.*
 import cats.data.Validated.*
 import cats.*
 import cats.syntax.all.*
-import com.bmmedia.jobsboard.domain.user.{User, Credentials}
+import com.bmmedia.jobsboard.domain.user.{User, Credentials, PasswordChange}
 import com.bmmedia.jobsboard.domain.auth.UserRegister
 
 object Validation {
@@ -156,6 +156,18 @@ object Validation {
         validatedEmail,
         password.validNel
       ).mapN(Credentials.apply)
+    }
+  }
+
+  given passwordChangeValidator: Validator[PasswordChange] = new Validator[PasswordChange] {
+
+    def validate(passwordChange: PasswordChange): ValidationResult[PasswordChange] = {
+      val PasswordChange(oldPassword, newPassword) = passwordChange
+
+      (
+        oldPassword.validNel,
+        newPassword.validNel
+      ).mapN(PasswordChange.apply)
     }
   }
 

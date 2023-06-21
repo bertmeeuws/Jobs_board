@@ -29,39 +29,36 @@ import cats.effect.kernel.Ref
 import tsec.authentication.JWTAuthenticator
 
 trait Auth[F[_]] {
-  def login(credentials: Credentials): F[Option[String]]
+  def login(credentials: Credentials): F[Option[JwtToken]]
   def logout(token: String): F[Unit]
   def verifyToken(password: Password, hash: HashedPassword): F[Boolean]
-  def createJWT(user: User): F[String]
-  def register(registerData: UserRegister): F[Option[String]]
+  def register(registerData: UserRegister): F[Option[JwtToken]]
   def changePassword(email: String, credentials: PasswordChange): F[Boolean]
-
+  def authenticator: Authenticator[F]
 }
 
 class LiveAuth[F[_]: Sync: Logger] private (
     usersRepository: Users[F],
-    authenticator: Authenticator[F]
+    override val authenticator: Authenticator[F]
 ) extends Auth[F] {
 
-  override def login(credentials: Credentials): F[Option[String]] = for {
+  override def login(credentials: Credentials): F[Option[JwtToken]] = for {
     _    <- Logger[F].info(s"Logging in user")
     user <- usersRepository.find(credentials.email)
     response <- user match {
+      case None => {
+        Logger[F].info("User not found") *> none[JwtToken].pure[F]
+      }
       case Some(user) => {
         Logger[F].info(s"User found: $user") *>
           verifyToken(credentials.password, PasswordHash(user.password)).flatMap { verified =>
             if (verified) {
               Logger[F].info("Password verified") *>
-                createJWT(user).flatMap { jwt =>
-                  jwt.some.pure[F]
-                }
+                authenticator.create(user.email).map(Some(_))
             } else {
-              Logger[F].info("Password not verified") *> none[String].pure[F]
+              Logger[F].info("Password not verified") *> none[JwtToken].pure[F]
             }
           }
-      }
-      case None => {
-        Logger[F].info("User not found") *> none[String].pure[F]
       }
     }
   } yield response
@@ -72,7 +69,8 @@ class LiveAuth[F[_]: Sync: Logger] private (
     isValid <- BCrypt.checkpwBool[F](password, token)
   } yield isValid
 
-  override def createJWT(user: User): F[String] = {
+  /*
+  override def createJWT(user: User): F[JwtToken] = {
     for {
       key <- HMACSHA256.generateKey[F]
       claims <- JWTClaims.withDuration[F](
@@ -82,18 +80,19 @@ class LiveAuth[F[_]: Sync: Logger] private (
       )
       jwt <- JWTMac
         .build[F, HMACSHA256](claims, key)
-      stringjwt <- JWTMac.buildToString[F, HMACSHA256](claims, key)
-    } yield stringjwt
-  }
 
-  override def register(registerData: UserRegister): F[Option[String]] = {
+    } yield jwt
+  }
+   */
+
+  override def register(registerData: UserRegister): F[Option[JwtToken]] = {
 
     for {
       _              <- Logger[F].info(s"User data: $registerData")
       hashedPassword <- BCrypt.hashpw[F](registerData.password)
       existingUser   <- usersRepository.find(registerData.email)
       response <- existingUser match {
-        case Some(user) => Logger[F].info(s"User already exists: $user") *> none[String].pure[F]
+        case Some(user) => Logger[F].info(s"User already exists: $user") *> none[JwtToken].pure[F]
         case None => {
           Logger[F].info("User does not exist") *>
             usersRepository
@@ -108,9 +107,8 @@ class LiveAuth[F[_]: Sync: Logger] private (
                 )
               )
               .flatMap { user =>
-                createJWT(user).flatMap { jwt =>
-                  jwt.some.pure[F]
-                }
+                Logger[F].info(s"User created: $user") *>
+                  authenticator.create(user.email).map(Some(_))
               }
         }
       }
@@ -121,7 +119,7 @@ class LiveAuth[F[_]: Sync: Logger] private (
 
   override def changePassword(email: String, credentials: PasswordChange): F[Boolean] = {
     for {
-      user <- usersRepository.find(credentials.email)
+      user <- usersRepository.find(email)
       response <- user match {
         case Some(user) => {
           Logger[F].info(s"User found: $user") *>
@@ -146,7 +144,7 @@ class LiveAuth[F[_]: Sync: Logger] private (
 }
 
 object LiveAuth {
-  def apply[F[_]: Sync: Logger](usersRepository: Users[F], authenticator: Authenticator[F]) = {
+  def apply[F[_]: Sync: Logger](usersRepository: Users[F]) = {
     // 1. Identity store
     val idStore: IdentityStore[F, String, User] = (email: String) =>
       OptionT(usersRepository.find(email))
@@ -177,6 +175,6 @@ object LiveAuth {
         identityStore = idStore,
         signingKey = key
       )
-    } yield new LiveAuth[F](usersRepository, authenticator).pure[F]
+    } yield new LiveAuth[F](usersRepository, authenticator)
   }
 }
