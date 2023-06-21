@@ -20,6 +20,10 @@ import com.bmmedia.jobsboard.logging.syntax.*
 import com.bmmedia.jobsboard.http.responses.*
 import org.http4s.dsl.impl.Responses.ForbiddenOps
 import org.http4s.dsl.Http4sDsl
+import tsec.authentication.SecuredRequest
+import com.bmmedia.jobsboard.domain.user.User
+import com.bmmedia.jobsboard.domain.security.JwtToken
+import com.bmmedia.jobsboard.domain
 
 object syntax {
 
@@ -42,5 +46,23 @@ object syntax {
             case Invalid(errors) =>
               BadRequest(FailureResponse(errors.toList.map(_.errorMessage).mkString(", ")))
           }
+
+        /*
+    extension (req: SecuredRequest[F, User, JwtToken])
+      def validate[A: Validator](
+          serverLogicIfValid: A => F[Response[F]]
+      )(using EntityDecoder[F, A]): F[Response[F]] =
+        req
+          .as[A]
+          .logError(e => s"Parsing payload failed $e")
+          .map(validateEntity)
+          .flatMap {
+            case Valid(entity) =>
+              serverLogicIfValid(entity) // F[Response[F]]
+            case Invalid(errors) =>
+              BadRequest(FailureResponse(errors.toList.map(_.errorMessage).mkString(", ")))
+          }
+         */
   }
+
 }

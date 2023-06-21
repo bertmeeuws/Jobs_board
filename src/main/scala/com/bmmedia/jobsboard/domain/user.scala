@@ -22,4 +22,5 @@ object user {
   }
 
   final case class Credentials(email: String, password: String)
+  final case class PasswordChange(oldPassword: String, newPassword: String)
 }
