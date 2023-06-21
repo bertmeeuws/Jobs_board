@@ -68,7 +68,7 @@ class AuthRoutes[F[_]: Concurrent: Logger] private (
     case req @ PUT -> Root / "change-password" asAuthed user => {
       for {
         passwordData <- req.request.as[PasswordChange]
-        result       <- auth.changePassword("FIll in", passwordData)
+        result       <- auth.changePassword(user.email, passwordData)
         _            <- Logger[F].info(s"Changing password for user: $user")
         response <- result match {
           case true  => Logger[F].info("Password changed") *> Ok()
