@@ -6,8 +6,12 @@ import org.scalatest.freespec.AsyncFreeSpec
 import org.scalatest.matchers.should.Matchers
 import cats.effect.IO
 
-class JobSpec extends AsyncFreeSpec with DoobieSpec with Matchers with JobFixture with AsyncIOSpec {
-  val initScript: String = "sql/jobs.sql"
+class JobSpec
+    extends AsyncFreeSpec
+    with DoobieSpec("sql/jobs.sql")
+    with Matchers
+    with JobFixture
+    with AsyncIOSpec {
 
   "Job's algebra" - {
     "should return no job if the given UUID does not exist" in {

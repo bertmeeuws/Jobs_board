@@ -9,12 +9,12 @@ import com.bmmedia.jobsboard.modules.Database
 import com.bmmedia.jobsboard.config.PostgresConfig
 import doobie.hikari.HikariTransactor
 
-trait DoobieSpec {
+trait DoobieSpec(val initScript: String = "sql/jobs.sql") {
 
   val postgres: Resource[IO, PostgreSQLContainer[Nothing]] = {
     val acquire = IO {
       val container: PostgreSQLContainer[Nothing] =
-        new PostgreSQLContainer("postgres").withInitScript("sql/jobs.sql")
+        new PostgreSQLContainer("postgres").withInitScript(initScript)
       container.start()
       container
     }

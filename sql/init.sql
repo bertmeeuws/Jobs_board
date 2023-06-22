@@ -34,3 +34,9 @@ CREATE TABLE users(
 
 INSERT INTO public.users (email, firstName, lastName, password, company, role, createdAt)
 VALUES ('john.doe@example.com', 'John', 'Doe', 'password123', 'BM Media', 'ADMIN',1623672000);
+
+CREATE TABLE recoverytokens (
+  email varchar(255) NOT NULL PRIMARY KEY,
+  token varchar(255) NOT NULL,
+  expiration bigint NOT NULL
+);

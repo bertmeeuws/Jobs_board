@@ -9,45 +9,76 @@ import com.bmmedia.jobsboard.domain.user.User
 import com.bmmedia.jobsboard.domain.user.Role
 import cats.implicits.*
 import doobie.implicits.*
+import com.bmmedia.fixtures.UserFixture
 
 class UserSpec
     extends AsyncFreeSpec
-    with DoobieSpec
+    with DoobieSpec("sql/users.sql")
     with Matchers
-    with JobFixture
+    with UserFixture
     with AsyncIOSpec {
-  val initScript: String = "sql/jobs.sql"
 
   "User's algebra" - {
     "should return a user if the given email does exist" in {
       transactor.use { xa =>
         val program = for {
-          test <- sql"""
-          SELECT company FROM users WHERE email = 'john.doe@example.com'
-          """
-            .query[String]
-            .unique
-            .transact(xa)
-          _         <- IO.println(test)
           users     <- LiveUsers[IO](xa)
-          retrieved <- users.find("john.doe@example.com")
+          retrieved <- users.find(email)
         } yield retrieved
 
         program.asserting {
           case None => fail("User not found")
           case Some(retrieved) =>
-            retrieved shouldBe User(
-              "john.doe@example.com",
-              "John",
-              "Doe",
-              "password123",
-              Role.ADMIN,
-              "BM Media".some
-            )
-
+            retrieved shouldBe user
         }
       }
     }
 
+    "should not return a user if the given email does not exist" in {
+      transactor.use { xa =>
+        val program = for {
+          users     <- LiveUsers[IO](xa)
+          retrieved <- users.find(email2)
+        } yield retrieved
+
+        program.asserting {
+          case None => succeed
+          case Some(_) =>
+            fail("User found")
+        }
+      }
+    }
+
+    "should update the user and return the updated user" in {
+      transactor.use { xa =>
+        val program = for {
+          users     <- LiveUsers[IO](xa)
+          retrieved <- users.find(email)
+          updated   <- users.update(user.copy(firstName = "David"))
+        } yield updated
+
+        program.asserting {
+          case None => fail("User not found")
+          case Some(retrieved) =>
+            retrieved shouldBe user.copy(firstName = "David")
+        }
+      }
+    }
+
+    "should return none because the user does not exist" in {
+      transactor.use { xa =>
+        val program = for {
+          users   <- LiveUsers[IO](xa)
+          updated <- users.update(user2.copy(firstName = "David"))
+          _       <- IO(println(updated))
+        } yield updated
+
+        program.asserting {
+          case None => succeed
+          case Some(_) =>
+            fail("User found")
+        }
+      }
+    }
   }
 }
