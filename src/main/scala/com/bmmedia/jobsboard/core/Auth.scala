@@ -27,6 +27,7 @@ import tsec.authentication.BackingStore
 import tsec.common.SecureRandomId
 import cats.effect.kernel.Ref
 import tsec.authentication.JWTAuthenticator
+import com.bmmedia.jobsboard.config.SecurityConfig
 
 trait Auth[F[_]] {
   def login(credentials: Credentials): F[Option[JwtToken]]
@@ -39,7 +40,8 @@ trait Auth[F[_]] {
 
 class LiveAuth[F[_]: Sync: Logger] private (
     usersRepository: Users[F],
-    override val authenticator: Authenticator[F]
+    override val authenticator: Authenticator[F],
+    securityConfig: SecurityConfig
 ) extends Auth[F] {
 
   override def login(credentials: Credentials): F[Option[JwtToken]] = for {
@@ -68,22 +70,6 @@ class LiveAuth[F[_]: Sync: Logger] private (
     token   <- token.pure[F]
     isValid <- BCrypt.checkpwBool[F](password, token)
   } yield isValid
-
-  /*
-  override def createJWT(user: User): F[JwtToken] = {
-    for {
-      key <- HMACSHA256.generateKey[F]
-      claims <- JWTClaims.withDuration[F](
-        expiration = Some(10.minutes),
-        customFields =
-          Seq("email" -> encodeString(user.email), "role" -> encodeString(user.role.toString))
-      )
-      jwt <- JWTMac
-        .build[F, HMACSHA256](claims, key)
-
-    } yield jwt
-  }
-   */
 
   override def register(registerData: UserRegister): F[Option[JwtToken]] = {
 
@@ -144,13 +130,13 @@ class LiveAuth[F[_]: Sync: Logger] private (
 }
 
 object LiveAuth {
-  def apply[F[_]: Sync: Logger](usersRepository: Users[F]) = {
+  def apply[F[_]: Sync: Logger](usersRepository: Users[F], securityConfig: SecurityConfig) = {
     // 1. Identity store
     val idStore: IdentityStore[F, String, User] = (email: String) =>
       OptionT(usersRepository.find(email))
 
     // 2. Backing store for JWT tokens
-    // Todo
+    // This is currently a map but in the future we should use a database
     val tokenStore = Ref.of[F, Map[SecureRandomId, JwtToken]](Map.empty).map { ref =>
       new BackingStore[F, SecureRandomId, JwtToken] {
         // Use a ref
@@ -163,18 +149,18 @@ object LiveAuth {
     }
 
     // 3. Hashing key
-    val keyF = HMACSHA256.buildKey[F]("secret".getBytes("UTF-8"))
+    val keyF = HMACSHA256.buildKey[F](securityConfig.secretKey.getBytes("UTF-8"))
 
     for {
       key        <- keyF
       tokenStore <- tokenStore
       authenticator = JWTAuthenticator.backed.inBearerToken(
-        expiryDuration = 10.day,
+        expiryDuration = securityConfig.tokenExpiration.day,
         maxIdle = None,
         tokenStore = tokenStore,
         identityStore = idStore,
         signingKey = key
       )
-    } yield new LiveAuth[F](usersRepository, authenticator)
+    } yield new LiveAuth[F](usersRepository, authenticator, securityConfig)
   }
 }

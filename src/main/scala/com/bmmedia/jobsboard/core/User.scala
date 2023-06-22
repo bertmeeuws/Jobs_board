@@ -9,6 +9,8 @@ import cats.effect.MonadCancelThrow
 import cats.*
 import cats.implicits.*
 import doobie.postgres.implicits.*
+import doobie.postgres.*
+import org.postgresql.util.PSQLException
 
 trait Users[F[_]] {
   def create(user: User): F[User]
@@ -48,10 +50,16 @@ class LiveUsers[F[_]: MonadCancelThrow] private (xa: Transactor[F]) extends User
   override def update(user: User): F[Option[User]] = {
     val User(email, firstName, lastName, password, company, role) = user
 
-    sql"""
+    for {
+      maybeUpdate <- sql"""
     UPDATE public.users SET firstName = $firstName, lastName = $lastName, password = $password, company = ${company.toString}, role = $role WHERE email = $email""".update.run
-      .transact(xa)
-      .as(user.some)
+        .transact(xa)
+        .attempt
+    } yield maybeUpdate match {
+      case Left(_)  => none
+      case Right(0) => none
+      case Right(_) => user.some
+    }
   }
   override def find(email: String): F[Option[User]] = {
     sql"""SELECT * FROM users WHERE email = $email"""
