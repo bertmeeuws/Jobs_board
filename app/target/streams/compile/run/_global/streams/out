@@ -1,2 +1,0 @@
-[0m[[0m[31merror[0m] [0m[0m`run` is only supported with scalaJSUseMainModuleInitializer := true[0m
-[0m[[0m[31merror[0m] [0m[0m(Compile / [31mrun[0m) `run` is only supported with scalaJSUseMainModuleInitializer := true[0m
