@@ -1,0 +1,4 @@
+[debug] [coreJS-test] Classpath dependencies List()
+[debug] [coreJS-test] Dependencies from configurations List(coreJS)
+[debug] Bloop wrote the configuration of project 'coreJS-test' to '/Users/bertmeeuws/Desktop/Projects/typelevel_course/jobs/.bloop/coreJS-test.json'
+[success] Generated .bloop/coreJS-test.json
