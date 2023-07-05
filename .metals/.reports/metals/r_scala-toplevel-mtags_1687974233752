@@ -1,0 +1,11 @@
+id: file://<WORKSPACE>/server/src/main/scala/com/bmmedia/playground/cookbook.scala:[104..105) in Input.VirtualFile("file://<WORKSPACE>/server/src/main/scala/com/bmmedia/playground/cookbook.scala", "package com.bmmedia.playground
+
+import scala.language.implicitConversions
+import scala.util.Try
+
+object {
+  implicit def toTry[A](a: A): Try[A] = Try(a)
+}")
+file://<WORKSPACE>/server/src/main/scala/com/bmmedia/playground/cookbook.scala:6: error: expected identifier; obtained lbrace
+object {
+       ^

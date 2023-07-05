@@ -1,0 +1,73 @@
+
+ê;src/test/scala/com/bmmedia/http/routes/AuthRoutesSpec.scala2
+ tsec/2"
+ tsec/authentication/20
+ ("tsec/authentication/Authenticator.2
+ tsec/2
+ 	tsec/mac/2
+ tsec/mac/jca/2&
+ tsec/mac/jca/HMACSHA256.2&
+ tsec/mac/jca/HMACSHA256#2
+ 
+com/2
+ com/bmmedia/2#
+ com/bmmedia/fixtures/2
+ cats/2
+ cats/effect/2"
+ cats/effect/testing/2,
+ $cats/effect/testing/scalatest/28
+% 0*cats/effect/testing/scalatest/AsyncIOSpec.2
+ 
+org/2
+ org/scalatest/2%
+ org/scalatest/freespec/23
+ +%org/scalatest/freespec/AsyncFreeSpec.2
+ 
+org/2
+ org/scalatest/2%
+ org/scalatest/matchers/2,
+ $org/scalatest/matchers/should/25
+% -'org/scalatest/matchers/should/Matchers.25
+% -'org/scalatest/matchers/should/Matchers#2
+ cats/2
+ cats/effect/2
+ cats/effect/IO.2
+ cats/effect/IO#2
+		 
+com/2
+		 com/bmmedia/2$
+		 com/bmmedia/jobsboard/2+
+		 #com/bmmedia/jobsboard/domain/20
+	$	 ("com/bmmedia/jobsboard/domain/user.25
+	)	 -'com/bmmedia/jobsboard/domain/user.User.25
+	)	 -'com/bmmedia/jobsboard/domain/user.User#2
+
+
+ 
+com/2
+
+
+ com/bmmedia/2$
+
+
+ com/bmmedia/jobsboard/2+
+
+
+ #com/bmmedia/jobsboard/domain/20
+
+$
+ ("com/bmmedia/jobsboard/domain/user.25
+
+)
+ -'com/bmmedia/jobsboard/domain/user.Role.25
+
+)
+ -'com/bmmedia/jobsboard/domain/user.Role#2
+ cats/2
+ cats/implicits.2
+ doobie/2'
+ doobie/package.implicits.2
+ com/2
+ com/bmmedia/2
+ com/bmmedia/http/2"
+ com/bmmedia/http/routes/PZ 0A19369D4385C61BD3E0E3F9EC2A257A

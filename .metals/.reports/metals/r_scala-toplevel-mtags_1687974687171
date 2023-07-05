@@ -1,0 +1,26 @@
+id: file://<WORKSPACE>/server/src/main/scala/com/bmmedia/playground/cookbook.scala:[376..382) in Input.VirtualFile("file://<WORKSPACE>/server/src/main/scala/com/bmmedia/playground/cookbook.scala", "package com.bmmedia.playground
+
+trait Printable[A] {
+  def format(value: A): String
+}
+
+object PrintableInstances {
+  implicit val stringPrintable: Printable[String] = new Printable[String] {
+    def format(value: String): String = value
+  }
+  implicit val intPrintable: Printable[Int] = new Printable[Int] {
+    def format(value: Int): String = value.toString
+  }
+}
+
+object 
+
+object playground {
+  def main(args: Array[String]): Unit = {
+    println("Hello, world!")
+  }
+}
+")
+file://<WORKSPACE>/server/src/main/scala/com/bmmedia/playground/cookbook.scala:18: error: expected identifier; obtained object
+object playground {
+^

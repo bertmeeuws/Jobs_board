@@ -1,0 +1,16 @@
+id: file://<WORKSPACE>/server/src/main/scala/com/bmmedia/playground/cookbook.scala:[43..49) in Input.VirtualFile("file://<WORKSPACE>/server/src/main/scala/com/bmmedia/playground/cookbook.scala", "package com.bmmedia.playground
+
+
+trait 
+
+
+
+object playground {
+  def main(args: Array[String]): Unit = {
+    println("Hello, world!")
+  }
+}
+")
+file://<WORKSPACE>/server/src/main/scala/com/bmmedia/playground/cookbook.scala:8: error: expected identifier; obtained object
+object playground {
+^

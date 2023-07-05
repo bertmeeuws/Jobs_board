@@ -1,0 +1,3 @@
+Symbol: com/bmmedia/jobsboard/Application.run().$anonfun().appResource.$anonfun().$anonfun().$anonfun().(httpApi)
+Error message: com/bmmedia/jobsboard/Application.run().$anonfun().appResource.$anonfun().$anonfun().$anonfun().(httpApi)
+Error: scala.meta.internal.mtags.IndexingExceptions$InvalidSymbolException: com/bmmedia/jobsboard/Application.run().$anonfun().appResource.$anonfun().$anonfun().$anonfun().(httpApi)

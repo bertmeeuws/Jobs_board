@@ -1,0 +1,59 @@
+id: file://<WORKSPACE>/app/src/main/scala/com/bmmedia/jobsboard/App.scala:[1100..1101) in Input.VirtualFile("file://<WORKSPACE>/app/src/main/scala/com/bmmedia/jobsboard/App.scala", "package com.bmmedia.jobsboard
+
+import scala.scalajs.js.annotation.*
+import org.scalajs.dom.document
+import tyrian.Html.*
+import tyrian.*
+import org.scalajs.dom.*
+import cats.effect.*
+import concurrent.duration.*
+import com.bmmedia.jobsboard.App.createNav
+
+@JSExportTopLevel("BMMediaApp")
+class App extends TyrianApp[Int, Int] {
+
+  override def init(flags: Map[String, String]): (Int, Cmd[cats.effect.IO, Int]) =
+    (0, Cmd.Emit(1))
+
+  override def subscriptions(model: String): Sub[cats.effect.IO, Int] =
+    Sub.every[IO](1.second).map(_ => 1)
+
+  override def update(model: String): Int => (String, Cmd[cats.effect.IO, Int]) = message =>
+    (model + message, Cmd.None)
+
+  override def view(model: String): Html[Int] = div(
+    createNav("jobs", "/jobs"),
+    div(
+      text(model)
+    )
+  )
+}
+
+object App {
+  def createNav(name: String, location: String) = {
+    a(
+      href    := location,
+      `class` := "nav-link",
+      onEvent(
+        "click",
+        e => {
+          e.preventDefault()
+          // router.pushState("jobs", "Jobs", "/jobs")
+        }
+      )
+    )(name)
+  }
+
+  type 
+}
+
+object Router {
+  trait Msg
+
+  case class ChangeLocation(location: String)   extends Msg
+  case class ExternalLocation(location: String) extends Msg
+}
+")
+file://<WORKSPACE>/app/src/main/scala/com/bmmedia/jobsboard/App.scala:48: error: expected identifier; obtained rbrace
+}
+^

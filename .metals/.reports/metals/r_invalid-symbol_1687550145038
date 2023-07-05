@@ -1,0 +1,3 @@
+Symbol: com/bmmedia/jobsboard/config/syntax.loadF().
+Error message: com/bmmedia/jobsboard/config/syntax.loadF().
+Error: scala.meta.internal.mtags.IndexingExceptions$InvalidSymbolException: com/bmmedia/jobsboard/config/syntax.loadF().

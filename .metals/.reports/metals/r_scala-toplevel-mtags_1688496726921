@@ -1,0 +1,38 @@
+id: file://<WORKSPACE>/app/src/main/scala/com/bmmedia/jobsboard/App.scala:[424..432) in Input.VirtualFile("file://<WORKSPACE>/app/src/main/scala/com/bmmedia/jobsboard/App.scala", "package com.bmmedia.jobsboard
+
+import scala.scalajs.js.annotation.*
+import org.scalajs.dom.document
+import tyrian.Html.*
+import tyrian.*
+import org.scalajs.dom.*
+import cats.effect.*
+import concurrent.duration.*
+import com.bmmedia.jobsboard.App.Msg
+
+@JSExportTopLevel("BMMediaApp")
+class App extends TyrianApp[Int, Msg] {
+  override def init(flags: Map[String, String]): (Msg, Cmd[cats.effect.IO, Int]) = case class 
+    
+  override def subscriptions(model: String): Sub[cats.effect.IO, Int] =
+    Sub.every[IO](1.second).map(_ => 1)
+
+  override def update(model: String): Int => (String, Cmd[cats.effect.IO, Int]) = message =>
+    (model + message, Cmd.None)
+
+  override def view(model: String): Html[Int] = div(
+    button(onClick(1))("Click me!"),
+    div(
+      text(model)
+    )
+  )
+}
+
+object App {
+  trait Msg
+
+  case class AddName(name: String) extends Msg
+}
+")
+file://<WORKSPACE>/app/src/main/scala/com/bmmedia/jobsboard/App.scala:16: error: expected identifier; obtained override
+  override def subscriptions(model: String): Sub[cats.effect.IO, Int] =
+  ^

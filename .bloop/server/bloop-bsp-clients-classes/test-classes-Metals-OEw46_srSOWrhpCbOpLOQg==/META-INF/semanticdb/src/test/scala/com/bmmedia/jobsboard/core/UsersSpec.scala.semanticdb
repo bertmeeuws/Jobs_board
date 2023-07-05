@@ -1,0 +1,28 @@
+
+—9src/test/scala/com/bmmedia/jobsboard/core/UsersSpec.scala2
+ cats/2
+ cats/effect/2"
+ cats/effect/testing/2,
+ $cats/effect/testing/scalatest/28
+% 0*cats/effect/testing/scalatest/AsyncIOSpec.2
+ 
+org/2
+ org/scalatest/2%
+ org/scalatest/freespec/23
+ +%org/scalatest/freespec/AsyncFreeSpec.2
+ 
+org/2
+ org/scalatest/2%
+ org/scalatest/matchers/2,
+ $org/scalatest/matchers/should/25
+% -'org/scalatest/matchers/should/Matchers.25
+% -'org/scalatest/matchers/should/Matchers#2
+ 
+com/2
+ com/bmmedia/2#
+ com/bmmedia/fixtures/2.
+ & com/bmmedia/fixtures/JobFixture.2
+ com/2
+ com/bmmedia/2 
+ com/bmmedia/jobsboard/2%
+ "com/bmmedia/jobsboard/core/PZ 4886DD4910B52F014CE8C83161196B52

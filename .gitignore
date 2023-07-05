@@ -49,7 +49,12 @@
 
 # sbt's target directories
 target/
-project/
+project/target/
+.idea/
+.idea
+.idea/workspace.xml
+
+
 project/**/target/
 test/macro-annot/target/
 test/files/target/
@@ -60,21 +65,19 @@ node_modules/
 app/dist/
 app/.parcel-cache/
 
-build-sbt/
-local.sbt
-jitwatch.out
+# Compiled source #
+###################
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
 
-common/js/
-common/jvm/
-common/shared/target/
-
-# Used by the restarr/restarrFull commands as target directories
-/build-restarr/
-/target-restarr/
-
-# metals
-.metals
-.bloop
-project/**/metals.sbt
-
-.bsp
+#Compiled target packages
+######################
+target/
+project/target/
+.idea/
+.idea
+.idea/workspace.xml

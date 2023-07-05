@@ -1,0 +1,161 @@
+{
+    "version": "1.4.0",
+    "project": {
+        "name": "jobs-test",
+        "directory": "/Users/bertmeeuws/Desktop/Projects/typelevel_course/jobs",
+        "workspaceDir": "/Users/bertmeeuws/Desktop/Projects/typelevel_course/jobs",
+        "sources": [
+            "/Users/bertmeeuws/Desktop/Projects/typelevel_course/jobs/src/test/scala",
+            "/Users/bertmeeuws/Desktop/Projects/typelevel_course/jobs/src/test/scala-2.12",
+            "/Users/bertmeeuws/Desktop/Projects/typelevel_course/jobs/src/test/scala-2",
+            "/Users/bertmeeuws/Desktop/Projects/typelevel_course/jobs/src/test/java",
+            "/Users/bertmeeuws/Desktop/Projects/typelevel_course/jobs/target/scala-2.12/src_managed/test"
+        ],
+        "dependencies": [
+            "jobs",
+            "coreJS-test",
+            "coreJVM-test",
+            "app-test",
+            "server-test"
+        ],
+        "classpath": [
+            "/Users/bertmeeuws/Desktop/Projects/typelevel_course/jobs/.bloop/jobs/scala-2.12/classes",
+            "/Users/bertmeeuws/.sbt/boot/scala-2.12.17/lib/scala-library.jar"
+        ],
+        "out": "/Users/bertmeeuws/Desktop/Projects/typelevel_course/jobs/.bloop/jobs",
+        "classesDir": "/Users/bertmeeuws/Desktop/Projects/typelevel_course/jobs/.bloop/jobs/scala-2.12/test-classes",
+        "resources": [
+            "/Users/bertmeeuws/Desktop/Projects/typelevel_course/jobs/src/test/resources",
+            "/Users/bertmeeuws/Desktop/Projects/typelevel_course/jobs/target/scala-2.12/resource_managed/test"
+        ],
+        "scala": {
+            "organization": "org.scala-lang",
+            "name": "scala-compiler",
+            "version": "2.12.17",
+            "options": [
+                
+            ],
+            "jars": [
+                "/Users/bertmeeuws/.sbt/boot/scala-2.12.17/lib/scala-library.jar",
+                "/Users/bertmeeuws/.sbt/boot/scala-2.12.17/lib/scala-compiler.jar",
+                "/Users/bertmeeuws/.sbt/boot/scala-2.12.17/lib/scala-reflect.jar",
+                "/Users/bertmeeuws/.sbt/boot/scala-2.12.17/lib/scala-xml_2.12-2.1.0.jar"
+            ],
+            "setup": {
+                "order": "mixed",
+                "addLibraryToBootClasspath": true,
+                "addCompilerToClasspath": false,
+                "addExtraJarsToClasspath": false,
+                "manageBootClasspath": true,
+                "filterLibraryFromClasspath": true
+            }
+        },
+        "java": {
+            "options": [
+                
+            ]
+        },
+        "test": {
+            "frameworks": [
+                {
+                    "names": [
+                        "org.scalacheck.ScalaCheckFramework"
+                    ]
+                },
+                {
+                    "names": [
+                        "org.specs2.runner.Specs2Framework",
+                        "org.specs2.runner.SpecsFramework"
+                    ]
+                },
+                {
+                    "names": [
+                        "org.specs.runner.SpecsFramework"
+                    ]
+                },
+                {
+                    "names": [
+                        "org.scalatest.tools.Framework",
+                        "org.scalatest.tools.ScalaTestFramework"
+                    ]
+                },
+                {
+                    "names": [
+                        "com.novocode.junit.JUnitFramework"
+                    ]
+                },
+                {
+                    "names": [
+                        "munit.Framework"
+                    ]
+                },
+                {
+                    "names": [
+                        "zio.test.sbt.ZTestFramework"
+                    ]
+                }
+            ],
+            "options": {
+                "excludes": [
+                    
+                ],
+                "arguments": [
+                    
+                ]
+            }
+        },
+        "platform": {
+            "name": "jvm",
+            "config": {
+                "home": "/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home",
+                "options": [
+                    "-Duser.dir=/Users/bertmeeuws/Desktop/Projects/typelevel_course/jobs"
+                ]
+            },
+            "mainClass": [
+                
+            ]
+        },
+        "resolution": {
+            "modules": [
+                {
+                    "organization": "org.scala-lang",
+                    "name": "scala-library",
+                    "version": "2.12.17",
+                    "configurations": "default",
+                    "artifacts": [
+                        {
+                            "name": "scala-library",
+                            "path": "/Users/bertmeeuws/.sbt/boot/scala-2.12.17/lib/scala-library.jar"
+                        },
+                        {
+                            "name": "scala-library",
+                            "classifier": "sources",
+                            "path": "/Users/bertmeeuws/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.12.17/scala-library-2.12.17-sources.jar"
+                        }
+                    ]
+                },
+                {
+                    "organization": "org.scala-lang",
+                    "name": "scala-library",
+                    "version": "2.12.17",
+                    "configurations": "optional",
+                    "artifacts": [
+                        {
+                            "name": "scala-library",
+                            "path": "/Users/bertmeeuws/.sbt/boot/scala-2.12.17/lib/scala-library.jar"
+                        },
+                        {
+                            "name": "scala-library",
+                            "classifier": "sources",
+                            "path": "/Users/bertmeeuws/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.12.17/scala-library-2.12.17-sources.jar"
+                        }
+                    ]
+                }
+            ]
+        },
+        "tags": [
+            "test"
+        ]
+    }
+}
