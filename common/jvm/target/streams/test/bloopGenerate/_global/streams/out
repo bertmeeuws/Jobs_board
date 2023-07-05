@@ -1,4 +1,0 @@
-[debug] [coreJVM-test] Classpath dependencies List()
-[debug] [coreJVM-test] Dependencies from configurations List(coreJVM)
-[debug] Bloop wrote the configuration of project 'coreJVM-test' to '/Users/bertmeeuws/Desktop/Projects/typelevel_course/jobs/.bloop/coreJVM-test.json'
-[success] Generated .bloop/coreJVM-test.json
