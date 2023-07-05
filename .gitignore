@@ -38,8 +38,8 @@
 /src/intellij*/*.ipr
 /src/intellij*/*.iws
 **/.cache
-/.idea
-/.settings
+.idea
+.settings
 
 # vscode
 /.vscode
@@ -48,14 +48,24 @@
 /qbin
 
 # sbt's target directories
-/target/
-/project/**/target/
-/test/macro-annot/target/
-/test/files/target/
-/test/target/
-/build-sbt/
+target/
+project/
+project/**/target/
+test/macro-annot/target/
+test/files/target/
+test/target/
+
+node_modules/
+app/dist/
+app/.parcel-cache/
+
+build-sbt/
 local.sbt
 jitwatch.out
+
+common/js/
+common/jvm/
+common/shared/target/
 
 # Used by the restarr/restarrFull commands as target directories
 /build-restarr/
