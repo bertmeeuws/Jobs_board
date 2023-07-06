@@ -9,6 +9,8 @@ import cats.effect.*
 import concurrent.duration.*
 import com.bmmedia.jobsboard.App.Model
 import fs2.dom.History
+import com.bmmedia.jobsboard.core.Router
+import com.bmmedia.jobsboard.components.*
 
 object App {
   type Msg = Router.Msg
@@ -38,27 +40,11 @@ class App extends TyrianApp[App.Msg, App.Model] {
   }
 
   override def view(model: Model): Html[Msg] = div(
-    createNav("jobs", "/jobs"),
-    createNav("home", "/home"),
-    createNav("google", "https://google.com"),
     div(
       h1("Hello World"),
+      Header.view(),
       p(s"You are now at: ${model.router.location}")
     )
   )
 
-  private def createNav(name: String, location: String) = {
-    a(
-      href    := location,
-      `class` := "p-3 text-red-500 hover:text-red-800 mx-6",
-      onEvent(
-        "click",
-        e => {
-          e.preventDefault()
-          if name == "google" then Router.ExternalRedirect(location)
-          else Router.ChangeLocation(location)
-        }
-      )
-    )(name)
-  }
 }
