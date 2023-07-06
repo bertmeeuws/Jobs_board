@@ -6,15 +6,16 @@ import tyrian.*
 import com.bmmedia.jobsboard.core.*
 import scala.scalajs.js.annotation.*
 import scala.scalajs.js
+import com.bmmedia.jobsboard.pages.Page
 
 object Header {
 
   def view() = div(
     ul(`class` := "flex items-center")(
       viewLogo(),
-      createNav("jobs", "/jobs"),
-      createNav("home", "/home"),
-      createNav("google", "https://google.com")
+      createNav("jobs", Page.Urls.JOBS),
+      createNav("login", Page.Urls.LOGIN),
+      createNav("Sign up", Page.Urls.REGISTER)
     )
   )
 
