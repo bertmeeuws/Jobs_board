@@ -1,4 +1,4 @@
-package com.bmmedia.jobsboard
+package com.bmmedia.jobsboard.core
 
 import fs2.dom.History
 import cats.effect.IO

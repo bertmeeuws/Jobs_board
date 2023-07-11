@@ -11,6 +11,7 @@ import cats.implicits.*
 import doobie.postgres.implicits.*
 import doobie.postgres.*
 import org.postgresql.util.PSQLException
+import com.bmmedia.jobsboard.domain.auth.*
 
 trait Users[F[_]] {
   def create(user: User): F[User]

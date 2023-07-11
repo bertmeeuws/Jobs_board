@@ -1,8 +1,7 @@
 package com.bmmedia.fixtures
 
-import com.bmmedia.jobsboard.domain.job.JobInfo
+import com.bmmedia.jobsboard.domain.job.*
 import java.util.UUID
-import com.bmmedia.jobsboard.domain.job.Job
 import cats.syntax.all.*
 
 trait JobFixture {

@@ -2,13 +2,10 @@ package com.bmmedia.http.routes
 
 import tsec.authentication.Authenticator
 import tsec.mac.jca.HMACSHA256
-import com.bmmedia.fixtures.UsersFixture
 import cats.effect.testing.scalatest.AsyncIOSpec
 import org.scalatest.freespec.AsyncFreeSpec
 import org.scalatest.matchers.should.Matchers
 import cats.effect.IO
-import com.bmmedia.jobsboard.domain.user.User
-import com.bmmedia.jobsboard.domain.user.Role
 import cats.implicits.*
 import doobie.implicits.*
 
