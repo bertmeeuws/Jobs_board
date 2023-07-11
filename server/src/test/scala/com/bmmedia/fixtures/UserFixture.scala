@@ -1,11 +1,10 @@
 package com.bmmedia.fixtures
 
-import com.bmmedia.jobsboard.domain.user.User
-import com.bmmedia.jobsboard.domain.user.Role
+import com.bmmedia.jobsboard.domain.user.*
 import cats.implicits.*
-import com.bmmedia.jobsboard.domain.user.Credentials
 import com.bmmedia.jobsboard.core.Users
 import cats.effect.IO
+import com.bmmedia.jobsboard.domain.auth.*
 
 trait UserFixture {
 // Create a user case class based on the Sql statement above

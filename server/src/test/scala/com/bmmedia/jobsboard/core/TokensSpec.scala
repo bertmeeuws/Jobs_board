@@ -5,8 +5,7 @@ import cats.effect.testing.scalatest.AsyncIOSpec
 import org.scalatest.freespec.AsyncFreeSpec
 import org.scalatest.matchers.should.Matchers
 import cats.effect.IO
-import com.bmmedia.jobsboard.domain.user.User
-import com.bmmedia.jobsboard.domain.user.Role
+import com.bmmedia.jobsboard.domain.user.*
 import cats.implicits.*
 import doobie.implicits.*
 
