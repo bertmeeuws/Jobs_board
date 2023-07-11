@@ -9,6 +9,11 @@ import com.bmmedia.jobsboard.pages.auth.*
 object Page {
   trait Msg
 
+  enum StatusKind {
+    case SUCCES, ERROR, LOADING
+  }
+  final case class Status(message: String, kind: StatusKind)
+
   object Urls {
     val LOGIN    = "/login"
     val REGISTER = "/signup"
