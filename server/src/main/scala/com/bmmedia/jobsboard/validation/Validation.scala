@@ -1,12 +1,12 @@
 package com.bmmedia.jobsboard.validation
 
 import cats.data.*
-import com.bmmedia.jobsboard.domain.job.*
 import cats.data.Validated.*
 import cats.*
 import cats.syntax.all.*
-import com.bmmedia.jobsboard.domain.user.{User, Credentials, PasswordChange}
-import com.bmmedia.jobsboard.domain.auth.UserRegister
+import com.bmmedia.jobsboard.domain.auth.*
+import com.bmmedia.jobsboard.domain.job.*
+import com.bmmedia.jobsboard.domain.user.*
 
 object Validation {
 

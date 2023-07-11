@@ -2,6 +2,7 @@ package com.bmmedia.jobsboard.domain
 
 import doobie.util.meta.Meta
 import org.checkerframework.checker.units.qual.C
+import com.bmmedia.jobsboard.domain.auth.Role
 
 object user {
   final case class User(
@@ -13,14 +14,4 @@ object user {
       company: Option[String]
   )
 
-  enum Role {
-    case ADMIN, RECRUITER
-  }
-
-  object Role {
-    given metaRole: Meta[Role] = Meta[String].timap[Role](Role.valueOf(_))(_.toString)
-  }
-
-  final case class Credentials(email: String, password: String)
-  final case class PasswordChange(oldPassword: String, newPassword: String)
 }

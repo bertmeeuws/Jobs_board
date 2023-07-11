@@ -9,14 +9,13 @@ import com.bmmedia.jobsboard.validation.syntax.HttpValidationDsl
 import cats.implicits._
 import cats.effect.*
 import org.http4s.*
-import com.bmmedia.jobsboard.domain.user.Credentials
+import com.bmmedia.jobsboard.domain.user.*
+import com.bmmedia.jobsboard.domain.security.*
+import com.bmmedia.jobsboard.domain.auth.{Credentials, PasswordChange, UserRegister}
 import com.bmmedia.jobsboard.core.Auth
-import com.bmmedia.jobsboard.domain.auth.UserRegister
 import org.http4s.server.Router
 import tsec.authentication._
 import tsec.common.SecureRandomId
-import com.bmmedia.jobsboard.domain.user.{User, PasswordChange}
-import com.bmmedia.jobsboard.domain.security.*
 import cats.MonadThrow
 
 class AuthRoutes[F[_]: Concurrent: Logger] private (

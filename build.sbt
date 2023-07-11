@@ -1,6 +1,6 @@
-ThisBuild / version := "0.1.0-SNAPSHOT"
+ThisBuild / version      := "0.1.0-SNAPSHOT"
+ThisBuild / organization := "com.bmmedia"
 
-lazy val bmmedia       = "com.bmmedia"
 lazy val scala3Version = "3.2.1"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -10,8 +10,7 @@ lazy val scala3Version = "3.2.1"
 lazy val core = (crossProject(JSPlatform, JVMPlatform) in file("common"))
   .settings(
     name         := "common",
-    scalaVersion := scala3Version,
-    organization := bmmedia
+    scalaVersion := scala3Version
   )
   .jvmSettings(
     // add here if necessary
@@ -34,7 +33,6 @@ lazy val app = (project in file("app"))
   .settings(
     name         := "app",
     scalaVersion := scala3Version,
-    organization := bmmedia,
     libraryDependencies ++= Seq(
       "io.indigoengine" %%% "tyrian-io"     % tyrianVersion,
       "com.armanbilge"  %%% "fs2-dom"       % fs2DomVersion,
@@ -66,7 +64,6 @@ lazy val server = (project in file("server"))
   .settings(
     name         := "server",
     scalaVersion := scala3Version,
-    organization := bmmedia,
     libraryDependencies ++= Seq(
       "org.typelevel"         %% "cats-effect"         % catsEffectVersion,
       "org.http4s"            %% "http4s-dsl"          % http4sVersion,
