@@ -1,11 +1,19 @@
 package com.bmmedia.jobsboard.pages.auth
 
+import io.circe.generic.auto.*
+import io.circe.syntax.*
+import io.circe.parser.*
+
 import tyrian.*
 import tyrian.Html.*
-import cats.effect.IO
+import tyrian.cmds.*
+import com.bmmedia.common.*
+import cats.effect.*
+import tyrian.http.*
 import com.bmmedia.jobsboard.pages.Page
-import tyrian.cmds.Logger
-import com.bmmedia.common.Constants
+import concurrent.duration.DurationInt
+
+import com.bmmedia.jobsboard.domain.auth.UserRegister
 
 final case class SignUpPage(
     firstName: String = "",
@@ -16,7 +24,7 @@ final case class SignUpPage(
     company: String = "",
     status: Option[Page.Status] = None
 ) extends Page {
-  import com.bmmedia.jobsboard.pages.auth.SignUpPage._
+  import SignUpPage.*
 
   override def initCmd: Cmd[IO, Page.Msg] = Cmd.None
 
@@ -137,6 +145,30 @@ object SignUpPage {
   case class UpdateLastName(lastName: String)               extends Msg
   case class UpdateCompany(company: String)                 extends Msg
 
-  case object NoOp          extends Msg
-  case object AttemptSignUp extends Msg
+  case object NoOp                          extends Msg
+  case object AttemptSignUp                 extends Msg
+  case class SignUpError(message: String)   extends Msg
+  case class SignUpSuccess(message: String) extends Msg
+
+  object Commands {
+    def signUp(newUserInfo: UserRegister): Cmd[IO, Msg] = {
+      val onSucces: Response => Msg   = ???
+      val onFailure: HttpError => Msg = e => SignUpError(e.toString())
+
+      Http.send(
+        Request(
+          url = "localhost:8020/api/v1/auth/register",
+          method = Method.Post,
+          headers = List(
+            Header("Content-Type", "application/json")
+          ),
+          body = Body.json(newUserInfo.asJson.toString()),
+          timeout = Request.DefaultTimeOut,
+          withCredentials = false
+        ),
+        Decoder[Msg](onSucces, onFailure)
+      )
+    }
+
+  }
 }
