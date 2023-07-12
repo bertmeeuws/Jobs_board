@@ -14,6 +14,7 @@ import com.bmmedia.jobsboard.pages.Page
 import concurrent.duration.DurationInt
 
 import com.bmmedia.jobsboard.domain.auth.UserRegister
+import io.circe.Encoder
 
 final case class SignUpPage(
     firstName: String = "",
@@ -44,6 +45,7 @@ final case class SignUpPage(
     case UpdateCompany(company) =>
       (this.copy(company = company), Cmd.None)
     case NoOp => (this, Cmd.None)
+
     case AttemptSignUp => {
       if (!email.matches(Constants.emailRegex)) {
         (
@@ -61,10 +63,26 @@ final case class SignUpPage(
           Cmd.None
         )
       } else {
-        (this, Logger.consoleLog[IO]("Signing up", email, password))
+        (
+          this,
+          Endpoints.signUp.call(
+            UserRegister(email, firstName, lastName, password, Some(company), Some(""))
+          )
+        )
       }
     }
-
+    case SignUpError(message) => {
+      (
+        setErrorStatus(message),
+        (Cmd.None)
+      )
+    }
+    case SignUpSuccess(message) => {
+      (
+        setSuccesStatus(message),
+        (Cmd.None)
+      )
+    }
     case _ => (this, Cmd.None)
   }
 
@@ -134,6 +152,10 @@ final case class SignUpPage(
     this.copy(status = Some(Page.Status(message, Page.StatusKind.ERROR)))
   }
 
+  def setSuccesStatus(message: String): Page = {
+    this.copy(status = Some(Page.Status(message, Page.StatusKind.SUCCESS)))
+  }
+
 }
 object SignUpPage {
   trait Msg extends Page.Msg
@@ -150,25 +172,26 @@ object SignUpPage {
   case class SignUpError(message: String)   extends Msg
   case class SignUpSuccess(message: String) extends Msg
 
-  object Commands {
-    def signUp(newUserInfo: UserRegister): Cmd[IO, Msg] = {
-      val onSucces: Response => Msg   = ???
-      val onFailure: HttpError => Msg = e => SignUpError(e.toString())
-
-      Http.send(
-        Request(
-          url = "localhost:8020/api/v1/auth/register",
-          method = Method.Post,
-          headers = List(
-            Header("Content-Type", "application/json")
-          ),
-          body = Body.json(newUserInfo.asJson.toString()),
-          timeout = Request.DefaultTimeOut,
-          withCredentials = false
-        ),
-        Decoder[Msg](onSucces, onFailure)
+  object Endpoints {
+    val signUp = new Endpoint[Msg] {
+      val location = Constants.Endpoints.signUp
+      val method   = Method.Post
+      val headers: List[Header] = List(
+        Header("Content-Type", "application/json")
       )
+      val onSuccess: Response => Msg = response =>
+        response.status match {
+          case Status(201, _) => SignUpSuccess("Successfully signed up")
+          case Status(s, _) if s >= 400 && s < 500 =>
+            val json   = response.body
+            val parsed = parse(json).flatMap(_.hcursor.get[String]("error"))
+            parsed match {
+              case Left(_)      => SignUpError("Something went wrong")
+              case Right(error) => SignUpError(error)
+            }
+        }
+      val onFailure: HttpError => Msg = e => SignUpError(e.toString())
     }
-
   }
+
 }
