@@ -8,7 +8,7 @@ import com.bmmedia.jobsboard.pages.auth.*
 import com.bmmedia.jobsboard.*
 
 object Page {
-  trait Msg extends App.Msg
+  trait Msg
 
   enum StatusKind {
     case SUCCESS, ERROR, LOADING

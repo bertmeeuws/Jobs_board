@@ -46,6 +46,10 @@ class App extends TyrianApp[App.Msg, App.Model] {
     )
 
   override def update(model: Model): Msg => (Model, Cmd[IO, Msg]) = {
+    case msg: Page.Msg =>
+      val (newPage, cmd) = model.page.update(msg)
+      (model.copy(page = newPage), cmd)
+
     case msg: Router.Msg =>
       val (newRouter, routerCmd) = model.router.update(msg)
       if (model.router == newRouter) (model, Cmd.None)
@@ -60,9 +64,6 @@ class App extends TyrianApp[App.Msg, App.Model] {
       val (newSession, cmd) = model.session.update(msg)
       (model.copy(session = newSession), cmd)
 
-    case msg: Page.Msg =>
-      val (newPage, cmd) = model.page.update(msg)
-      (model.copy(page = newPage), cmd)
   }
 
   override def view(model: Model): Html[Msg] = div(

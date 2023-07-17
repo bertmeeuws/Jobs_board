@@ -24,7 +24,7 @@ final case class LoginPage(
 ) extends Page:
   import LoginPage.*
 
-  override def initCmd: Cmd[IO, Msg] = Cmd.None
+  override def initCmd: Cmd[IO, App.Msg] = Cmd.None
 
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {
     case UpdateEmail(email) =>
@@ -49,13 +49,14 @@ final case class LoginPage(
     case SignInError(message) => (setErrorStatus(message), Cmd.None)
     case SignInSuccess(message, token, email) =>
       (setSuccesStatus(message), Cmd.Emit(Session.SetToken(email, token)))
-    case _ => (this, Logger.debug[IO]("Loginnn"))
+    case _ => (this, Cmd.None)
   }
 
   override def view(): Html[App.Msg] = {
     div(
       h1("Login Page update"),
       text(status.map(_.message).getOrElse("")),
+      text(s"name: $email"),
       text("test"),
       text(email),
       text(password),
@@ -88,7 +89,7 @@ final case class LoginPage(
       `Type`: String,
       Placeholder: String,
       IsRequired: Boolean = true,
-      onChange: String => LoginPage.Msg
+      onChange: String => App.Msg
   ): Html[App.Msg] =
     div(
       `class` := "form-input"
