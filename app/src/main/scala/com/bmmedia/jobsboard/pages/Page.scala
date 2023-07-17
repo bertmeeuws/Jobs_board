@@ -5,9 +5,10 @@ import cats.effect.IO
 import com.bmmedia.jobsboard.pages.jobs.*
 import com.bmmedia.jobsboard.pages.error.*
 import com.bmmedia.jobsboard.pages.auth.*
+import com.bmmedia.jobsboard.*
 
 object Page {
-  trait Msg
+  trait Msg extends App.Msg
 
   enum StatusKind {
     case SUCCESS, ERROR, LOADING
@@ -40,9 +41,9 @@ object Page {
 abstract class Page {
   import Page.*
 
-  def initCmd: Cmd[IO, Msg]
+  def initCmd: Cmd[IO, App.Msg] = Cmd.None
 
-  def update(msg: Msg): (Page, Cmd[IO, Msg])
+  def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = (this, Cmd.None)
 
-  def view(): Html[Page.Msg]
+  def view(): Html[App.Msg]
 }

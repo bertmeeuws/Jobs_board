@@ -12,6 +12,9 @@ import com.bmmedia.jobsboard.pages.Page
 import com.bmmedia.common.Endpoint
 import com.bmmedia.common.Constants
 import tyrian.http.*
+import com.bmmedia.jobsboard.core.*
+import com.bmmedia.jobsboard.domain.auth.Credentials
+import com.bmmedia.jobsboard.*
 
 final case class LoginPage(
     email: String = "",
@@ -20,17 +23,20 @@ final case class LoginPage(
 ) extends Page:
   import LoginPage.*
 
-  override def initCmd: Cmd[IO, Page.Msg] = Cmd.None
+  override def initCmd: Cmd[IO, App.Msg] = Cmd.None
 
-  override def update(msg: Page.Msg): (Page, Cmd[IO, Page.Msg]) = msg match {
+  override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {
     case UpdateEmail(email)       => (this.copy(email = email), Cmd.None)
     case UpdatePassword(password) => (this.copy(password = password), Cmd.None)
     case NoOp                     => (this, Cmd.None)
-    case AttemptLogin             => (this, Cmd.None)
-    case _                        => (this, Cmd.None)
+    case AttemptLogin             => (this, Endpoints.signIn.call(Credentials(email, password)))
+    case SignInError(message)     => (setErrorStatus(message), Cmd.None)
+    case SignInSuccess(message, token, email) =>
+      (setSuccesStatus(message), Cmd.Emit(Session.SetToken(email, token)))
+    case _ => (this, Cmd.None)
   }
 
-  override def view(): Html[Page.Msg] = {
+  override def view(): Html[App.Msg] = {
     div(
       h1("Login Page"),
       form(
@@ -63,7 +69,7 @@ final case class LoginPage(
       Placeholder: String,
       IsRequired: Boolean = true,
       onChange: String => LoginPage.Msg
-  ): Html[Page.Msg] =
+  ): Html[App.Msg] =
     div(
       `class` := "form-input"
     )(
@@ -89,26 +95,31 @@ final case class LoginPage(
   }
 
 object LoginPage {
-  trait Msg extends Page.Msg
+  trait Msg extends App.Msg
 
   case object AttemptLogin extends Msg
   case object NoOp         extends Msg
 
-  final case class UpdateEmail(email: String)       extends Msg
-  final case class UpdatePassword(password: String) extends Msg
-  case class SignInError(message: String)           extends Msg
-  case class SignInSuccess(message: String)         extends Msg
+  final case class UpdateEmail(email: String)                             extends Msg
+  final case class UpdatePassword(password: String)                       extends Msg
+  case class SignInError(message: String)                                 extends Msg
+  case class SignInSuccess(message: String, token: String, email: String) extends Msg
 
   object Endpoints {
     val signIn = new Endpoint[Msg] {
-      val location = Constants.Endpoints.signUp
+      val location = Constants.Endpoints.signIn
       val method   = Method.Post
       val headers: List[Header] = List(
         Header("Content-Type", "application/json")
       )
       val onSuccess: Response => Msg = response =>
         response.status match {
-          case Status(201, _) => SignInSuccess("Successfully signed in")
+          case Status(201, _) =>
+            SignInSuccess(
+              "Successfully signed in",
+              response.headers.get("authorization").get,
+              "test@gmail.com"
+            )
           case Status(s, _) if s >= 400 && s < 500 =>
             val json   = response.body
             val parsed = parse(json).flatMap(_.hcursor.get[String]("error"))

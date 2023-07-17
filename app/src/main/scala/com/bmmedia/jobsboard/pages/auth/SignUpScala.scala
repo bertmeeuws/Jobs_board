@@ -12,6 +12,7 @@ import cats.effect.*
 import tyrian.http.*
 import com.bmmedia.jobsboard.pages.Page
 import concurrent.duration.DurationInt
+import com.bmmedia.jobsboard.*
 
 import com.bmmedia.jobsboard.domain.auth.UserRegister
 import io.circe.Encoder
@@ -27,9 +28,9 @@ final case class SignUpPage(
 ) extends Page {
   import SignUpPage.*
 
-  override def initCmd: Cmd[IO, Page.Msg] = Cmd.None
+  override def initCmd: Cmd[IO, App.Msg] = Cmd.None
 
-  override def update(msg: Page.Msg): (Page, Cmd[IO, Page.Msg]) = msg match {
+  override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {
     case UpdateEmail(email) => (this.copy(email = email), Cmd.None)
     case UpdateFirstName(firstName) =>
       (this.copy(firstName = firstName), Cmd.None)
@@ -86,7 +87,7 @@ final case class SignUpPage(
     case _ => (this, Cmd.None)
   }
 
-  override def view(): Html[Page.Msg] = {
+  override def view(): Html[App.Msg] = {
     div()(
       h1("Sign up Page"),
       status match {
@@ -131,7 +132,7 @@ final case class SignUpPage(
       Placeholder: String,
       IsRequired: Boolean = true,
       onChange: String => Msg
-  ): Html[Page.Msg] =
+  ): Html[App.Msg] =
     div(
       `class` := "form-input"
     )(
@@ -158,7 +159,7 @@ final case class SignUpPage(
 
 }
 object SignUpPage {
-  trait Msg extends Page.Msg
+  trait Msg extends App.Msg
 
   case class UpdateEmail(email: String)                     extends Msg
   case class UpdatePassword(password: String)               extends Msg

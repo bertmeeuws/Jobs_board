@@ -7,5 +7,7 @@ object Constants {
     val root = "http://localhost:8080"
 
     val signUp = "/api/auth/register"
+    val signIn = "/api/auth/login"
+
   }
 }
