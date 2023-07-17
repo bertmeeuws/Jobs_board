@@ -84,7 +84,7 @@ final case class SignUpPage(
         (Cmd.None)
       )
     }
-    case _ => (this, Cmd.None)
+    case _ => (this, Logger.debug[IO]("NoOp"))
   }
 
   override def view(): Html[App.Msg] = {
@@ -94,6 +94,7 @@ final case class SignUpPage(
         case Some(status) => div(`class` := "text-red-500")(text(status.message))
         case None         => div()
       },
+      text(s"Email: $email"),
       form(
         name    := "signup",
         `class` := "w-full max-w-lg",
@@ -104,10 +105,10 @@ final case class SignUpPage(
             NoOp
           }
         )
-      )(createInput("firstName", "First Name", "text", "First Name", true, UpdateFirstName(_))),
-      createInput("lastName", "Last Name", "text", "Last Name", true, UpdateLastName(_)),
-      createInput("email", "Email", "email", "Email", true, UpdateEmail(_)),
-      createInput("password", "Password", "password", "Password", true, UpdatePassword(_)),
+      )(createInput("firstName", "firstname", "text", "First Name", true, UpdateFirstName(_))),
+      createInput("lastName", "lastname", "text", "Last Name", true, UpdateLastName(_)),
+      createInput("email", "email", "email", "Email", true, UpdateEmail(_)),
+      createInput("password", "password", "password", "Password", true, UpdatePassword(_)),
       createInput(
         "confirmPassword",
         "Confirm Password",

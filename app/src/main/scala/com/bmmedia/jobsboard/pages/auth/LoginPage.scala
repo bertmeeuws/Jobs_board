@@ -15,6 +15,7 @@ import tyrian.http.*
 import com.bmmedia.jobsboard.core.*
 import com.bmmedia.jobsboard.domain.auth.Credentials
 import com.bmmedia.jobsboard.*
+import tyrian.cmds.Logger
 
 final case class LoginPage(
     email: String = "",
@@ -23,25 +24,44 @@ final case class LoginPage(
 ) extends Page:
   import LoginPage.*
 
-  override def initCmd: Cmd[IO, App.Msg] = Cmd.None
+  override def initCmd: Cmd[IO, Msg] = Cmd.None
 
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {
-    case UpdateEmail(email)       => (this.copy(email = email), Cmd.None)
-    case UpdatePassword(password) => (this.copy(password = password), Cmd.None)
-    case NoOp                     => (this, Cmd.None)
-    case AttemptLogin             => (this, Endpoints.signIn.call(Credentials(email, password)))
-    case SignInError(message)     => (setErrorStatus(message), Cmd.None)
+    case UpdateEmail(email) =>
+      (this.copy(email = email), Cmd.None)
+    case UpdatePassword(password) =>
+      (this.copy(password = password), Cmd.None)
+    case NoOp => (this, Cmd.None)
+    case AttemptLogin =>
+      if (!email.matches(Constants.emailRegex)) {
+        (
+          setErrorStatus("Please enter a valid email address"),
+          Cmd.None
+        )
+      } else if (password.isEmpty()) {
+        (
+          setErrorStatus("Please enter a password"),
+          Cmd.None
+        )
+      } else {
+        (this, Endpoints.signIn.call(Credentials(email, password)))
+      }
+    case SignInError(message) => (setErrorStatus(message), Cmd.None)
     case SignInSuccess(message, token, email) =>
       (setSuccesStatus(message), Cmd.Emit(Session.SetToken(email, token)))
-    case _ => (this, Cmd.None)
+    case _ => (this, Logger.debug[IO]("Loginnn"))
   }
 
   override def view(): Html[App.Msg] = {
     div(
-      h1("Login Page"),
+      h1("Login Page update"),
+      text(status.map(_.message).getOrElse("")),
+      text("test"),
+      text(email),
+      text(password),
       form(
         name    := "signup",
-        `class` := "w-full max-w-lg",
+        `class` := "w-full max-w-lg ml-10",
         onEvent(
           "submit",
           e => {
@@ -50,14 +70,14 @@ final case class LoginPage(
           }
         )
       )(
-        createInput("email", "Email", "email", "Email", true, UpdateEmail(_)),
-        createInput("password", "Password", "password", "Password", true, UpdatePassword(_)),
-        button(
-          `class` := "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline",
-          `type` := "button",
-          onClick(AttemptLogin)
-        )("Sign up")
-      )
+        createInput("email", "email", "email", "Email", true, UpdateEmail(_)),
+        createInput("password", "password", "password", "Password", true, UpdatePassword(_))
+      ),
+      button(
+        `class` := "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline",
+        `type` := "button",
+        onClick(AttemptLogin)
+      )("Sign in")
     )
 
   }
@@ -100,8 +120,9 @@ object LoginPage {
   case object AttemptLogin extends Msg
   case object NoOp         extends Msg
 
-  final case class UpdateEmail(email: String)                             extends Msg
-  final case class UpdatePassword(password: String)                       extends Msg
+  final case class UpdateEmail(email: String)       extends Msg
+  final case class UpdatePassword(password: String) extends Msg
+
   case class SignInError(message: String)                                 extends Msg
   case class SignInSuccess(message: String, token: String, email: String) extends Msg
 
@@ -114,10 +135,11 @@ object LoginPage {
       )
       val onSuccess: Response => Msg = response =>
         response.status match {
-          case Status(201, _) =>
+          case Status(200, _) =>
+            Logger.consoleLog[IO](response.headers.get("Authorization").get)
             SignInSuccess(
               "Successfully signed in",
-              response.headers.get("authorization").get,
+              response.headers.get("Authorization").get,
               "test@gmail.com"
             )
           case Status(s, _) if s >= 400 && s < 500 =>

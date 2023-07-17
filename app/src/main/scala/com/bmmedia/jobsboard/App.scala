@@ -14,6 +14,7 @@ import com.bmmedia.jobsboard.components.*
 import com.bmmedia.jobsboard.pages.Page
 import com.bmmedia.jobsboard.core.Session
 import com.bmmedia.jobsboard.core.Session.*
+import tyrian.cmds.Logger
 
 object App {
   trait Msg
@@ -25,7 +26,7 @@ object App {
 class App extends TyrianApp[App.Msg, App.Model] {
   import App.*
 
-  override def init(flags: Map[String, String]): (Model, Cmd[IO, App.Msg]) =
+  override def init(flags: Map[String, String]): (Model, Cmd[IO, Msg]) =
     val location            = window.location.pathname
     val page                = Page.get(location)
     val pageCmd             = page.initCmd
@@ -54,16 +55,17 @@ class App extends TyrianApp[App.Msg, App.Model] {
 
         (model.copy(router = newRouter, page = newPage), routerCmd |+| newPageCmd)
       }
+
+    case msg: Session.Msg =>
+      val (newSession, cmd) = model.session.update(msg)
+      (model.copy(session = newSession), cmd)
+
     case msg: Page.Msg =>
       val (newPage, cmd) = model.page.update(msg)
       (model.copy(page = newPage), cmd)
-    case msg: Session.Msg =>
-      val (newSession, cmd) = model.session.update(msg)
-
-      (model.copy(session = newSession), cmd)
   }
 
-  override def view(model: Model): Html[App.Msg] = div(
+  override def view(model: Model): Html[Msg] = div(
     Header.view(),
     model.page.view()
   )
