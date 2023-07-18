@@ -15,7 +15,7 @@ final case class Session(email: Option[String] = None, token: Option[String] = N
   import Session.*
   import Session.Commands.*
 
-  def update(msg: Msg): (Session, Cmd[IO, App.Msg]) = msg match {
+  def update(msg: Msg): (Session, Cmd[IO, Msg]) = msg match {
     case SetToken(email, token) =>
       (
         this.copy(email = Some(email), token = Some(token)),

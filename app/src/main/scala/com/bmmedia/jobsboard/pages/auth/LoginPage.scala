@@ -24,7 +24,7 @@ final case class LoginPage(
 ) extends Page:
   import LoginPage.*
 
-  override def initCmd: Cmd[IO, App.Msg] = Cmd.None
+  override def initCmd: Cmd[IO, App.Msg] = Logger.consoleLog[IO]("INIT LOGIN PAGE")
 
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {
     case UpdateEmail(email) =>
@@ -55,11 +55,8 @@ final case class LoginPage(
   override def view(): Html[App.Msg] = {
     div(
       h1("Login Page update"),
+      text(s"email: $email"),
       text(status.map(_.message).getOrElse("")),
-      text(s"name: $email"),
-      text("test"),
-      text(email),
-      text(password),
       form(
         name    := "signup",
         `class` := "w-full max-w-lg ml-10",
@@ -89,7 +86,7 @@ final case class LoginPage(
       `Type`: String,
       Placeholder: String,
       IsRequired: Boolean = true,
-      onChange: String => App.Msg
+      onChange: String => LoginPage.Msg
   ): Html[App.Msg] =
     div(
       `class` := "form-input"
@@ -128,13 +125,13 @@ object LoginPage {
   case class SignInSuccess(message: String, token: String, email: String) extends Msg
 
   object Endpoints {
-    val signIn = new Endpoint[Msg] {
+    val signIn = new Endpoint[App.Msg] {
       val location = Constants.Endpoints.signIn
       val method   = Method.Post
       val headers: List[Header] = List(
         Header("Content-Type", "application/json")
       )
-      val onSuccess: Response => Msg = response =>
+      val onSuccess: Response => App.Msg = response =>
         response.status match {
           case Status(200, _) =>
             Logger.consoleLog[IO](response.headers.get("Authorization").get)
@@ -151,7 +148,7 @@ object LoginPage {
               case Right(error) => SignInError(error)
             }
         }
-      val onFailure: HttpError => Msg = e => SignInError(e.toString())
+      val onFailure: HttpError => App.Msg = e => SignInError(e.toString())
     }
   }
 }

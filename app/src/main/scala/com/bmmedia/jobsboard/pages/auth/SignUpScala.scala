@@ -175,13 +175,13 @@ object SignUpPage {
   case class SignUpSuccess(message: String) extends Msg
 
   object Endpoints {
-    val signUp = new Endpoint[Msg] {
+    val signUp = new Endpoint[App.Msg] {
       val location = Constants.Endpoints.signUp
       val method   = Method.Post
       val headers: List[Header] = List(
         Header("Content-Type", "application/json")
       )
-      val onSuccess: Response => Msg = response =>
+      val onSuccess: Response => App.Msg = response =>
         response.status match {
           case Status(201, _) => SignUpSuccess("Successfully signed up")
           case Status(s, _) if s >= 400 && s < 500 =>
@@ -192,7 +192,7 @@ object SignUpPage {
               case Right(error) => SignUpError(error)
             }
         }
-      val onFailure: HttpError => Msg = e => SignUpError(e.toString())
+      val onFailure: HttpError => App.Msg = e => SignUpError(e.toString())
     }
   }
 
