@@ -7,32 +7,34 @@ import tyrian.*
 import org.scalajs.dom.*
 import cats.effect.*
 import concurrent.duration.*
-import com.bmmedia.jobsboard.App.Model
 import fs2.dom.History
 import com.bmmedia.jobsboard.core.Router
 import com.bmmedia.jobsboard.components.*
 import com.bmmedia.jobsboard.pages.Page
+import com.bmmedia.jobsboard.core.Session
+import tyrian.cmds.Logger
 
 object App {
-  type Msg = Router.Msg | Page.Msg
+  trait Msg
 
-  case class Model(router: Router, page: Page)
+  case class Model(router: Router, page: Page, session: Session)
 }
 
+import App.*
 @JSExportTopLevel("BMMediaApp")
-class App extends TyrianApp[App.Msg, App.Model] {
-  import App.*
+class App extends TyrianApp[Msg, App.Model] {
 
   override def init(flags: Map[String, String]): (Model, Cmd[IO, Msg]) =
-    val location = window.location.pathname
-    val page     = Page.get(location)
-    val pageCmd  = page.initCmd
+    val location            = window.location.pathname
+    val page                = Page.get(location)
+    val pageCmd             = page.initCmd
+    val (router, routerCmd) = Router.startAt(location)
 
-    val (router, cmd) = Router.startAt(location)
+    val session    = Session()
+    val sessionCmd = session.initCmd
 
-    (Model(router, page), cmd |+| pageCmd)
-
-  override def subscriptions(model: Model): Sub[IO, Msg] =
+    (Model(router, page, session), routerCmd |+| pageCmd |+| sessionCmd)
+  override def subscriptions(model: Model): Sub[IO, App.Msg] =
     Sub.make(
       "urlChange",
       model.router.history.state.discrete
@@ -41,7 +43,7 @@ class App extends TyrianApp[App.Msg, App.Model] {
     )
 
   override def update(model: Model): Msg => (Model, Cmd[IO, Msg]) = {
-    case msg: Router.Msg =>
+    case msg: Router.Msg => {
       val (newRouter, routerCmd) = model.router.update(msg)
       if (model.router == newRouter) (model, Cmd.None)
       else {
@@ -50,14 +52,21 @@ class App extends TyrianApp[App.Msg, App.Model] {
 
         (model.copy(router = newRouter, page = newPage), routerCmd |+| newPageCmd)
       }
-    case msg: Page.Msg =>
+    }
+
+    case msg: Session.Msg => {
+      val (newSession, sessionCmd) = model.session.update(msg)
+      (model.copy(session = newSession), sessionCmd)
+    }
+
+    case msg: App.Msg => {
       val (newPage, cmd) = model.page.update(msg)
       (model.copy(page = newPage), cmd)
+    }
   }
 
   override def view(model: Model): Html[App.Msg] = div(
     Header.view(),
     model.page.view()
   )
-
 }

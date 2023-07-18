@@ -17,6 +17,7 @@ import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import com.bmmedia.jobsboard.modules.*
 import cats.effect.IO
+import org.http4s.server.middleware.CORS
 
 object Application extends IOApp.Simple {
 
@@ -34,7 +35,9 @@ object Application extends IOApp.Simple {
             .withHost(emberConfig.host)
             .withPort(emberConfig.port)
             .withHttpApp(
-              httpApi.endpoints.orNotFound
+              CORS(
+                httpApi.endpoints.orNotFound
+              )
             )
             .build
         } yield server

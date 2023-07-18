@@ -12,8 +12,10 @@ import cats.effect.*
 import tyrian.http.*
 import com.bmmedia.jobsboard.pages.Page
 import concurrent.duration.DurationInt
+import com.bmmedia.jobsboard.*
 
 import com.bmmedia.jobsboard.domain.auth.UserRegister
+import io.circe.Encoder
 
 final case class SignUpPage(
     firstName: String = "",
@@ -26,9 +28,9 @@ final case class SignUpPage(
 ) extends Page {
   import SignUpPage.*
 
-  override def initCmd: Cmd[IO, Page.Msg] = Cmd.None
+  override def initCmd: Cmd[IO, App.Msg] = Cmd.None
 
-  override def update(msg: Page.Msg): (Page, Cmd[IO, Page.Msg]) = msg match {
+  override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {
     case UpdateEmail(email) => (this.copy(email = email), Cmd.None)
     case UpdateFirstName(firstName) =>
       (this.copy(firstName = firstName), Cmd.None)
@@ -44,6 +46,7 @@ final case class SignUpPage(
     case UpdateCompany(company) =>
       (this.copy(company = company), Cmd.None)
     case NoOp => (this, Cmd.None)
+
     case AttemptSignUp => {
       if (!email.matches(Constants.emailRegex)) {
         (
@@ -61,20 +64,37 @@ final case class SignUpPage(
           Cmd.None
         )
       } else {
-        (this, Logger.consoleLog[IO]("Signing up", email, password))
+        (
+          this,
+          Endpoints.signUp.call(
+            UserRegister(email, firstName, lastName, password, Some(company), Some(""))
+          )
+        )
       }
     }
-
-    case _ => (this, Cmd.None)
+    case SignUpError(message) => {
+      (
+        setErrorStatus(message),
+        (Cmd.None)
+      )
+    }
+    case SignUpSuccess(message) => {
+      (
+        setSuccesStatus(message),
+        (Cmd.None)
+      )
+    }
+    case _ => (this, Logger.debug[IO]("NoOp"))
   }
 
-  override def view(): Html[Page.Msg] = {
+  override def view(): Html[App.Msg] = {
     div()(
       h1("Sign up Page"),
       status match {
         case Some(status) => div(`class` := "text-red-500")(text(status.message))
         case None         => div()
       },
+      text(s"Email: $email"),
       form(
         name    := "signup",
         `class` := "w-full max-w-lg",
@@ -85,10 +105,10 @@ final case class SignUpPage(
             NoOp
           }
         )
-      )(createInput("firstName", "First Name", "text", "First Name", true, UpdateFirstName(_))),
-      createInput("lastName", "Last Name", "text", "Last Name", true, UpdateLastName(_)),
-      createInput("email", "Email", "email", "Email", true, UpdateEmail(_)),
-      createInput("password", "Password", "password", "Password", true, UpdatePassword(_)),
+      )(createInput("firstName", "firstname", "text", "First Name", true, UpdateFirstName(_))),
+      createInput("lastName", "lastname", "text", "Last Name", true, UpdateLastName(_)),
+      createInput("email", "email", "email", "Email", true, UpdateEmail(_)),
+      createInput("password", "password", "password", "Password", true, UpdatePassword(_)),
       createInput(
         "confirmPassword",
         "Confirm Password",
@@ -113,7 +133,7 @@ final case class SignUpPage(
       Placeholder: String,
       IsRequired: Boolean = true,
       onChange: String => Msg
-  ): Html[Page.Msg] =
+  ): Html[App.Msg] =
     div(
       `class` := "form-input"
     )(
@@ -134,9 +154,13 @@ final case class SignUpPage(
     this.copy(status = Some(Page.Status(message, Page.StatusKind.ERROR)))
   }
 
+  def setSuccesStatus(message: String): Page = {
+    this.copy(status = Some(Page.Status(message, Page.StatusKind.SUCCESS)))
+  }
+
 }
 object SignUpPage {
-  trait Msg extends Page.Msg
+  trait Msg extends App.Msg
 
   case class UpdateEmail(email: String)                     extends Msg
   case class UpdatePassword(password: String)               extends Msg
@@ -150,25 +174,26 @@ object SignUpPage {
   case class SignUpError(message: String)   extends Msg
   case class SignUpSuccess(message: String) extends Msg
 
-  object Commands {
-    def signUp(newUserInfo: UserRegister): Cmd[IO, Msg] = {
-      val onSucces: Response => Msg   = ???
-      val onFailure: HttpError => Msg = e => SignUpError(e.toString())
-
-      Http.send(
-        Request(
-          url = "localhost:8020/api/v1/auth/register",
-          method = Method.Post,
-          headers = List(
-            Header("Content-Type", "application/json")
-          ),
-          body = Body.json(newUserInfo.asJson.toString()),
-          timeout = Request.DefaultTimeOut,
-          withCredentials = false
-        ),
-        Decoder[Msg](onSucces, onFailure)
+  object Endpoints {
+    val signUp = new Endpoint[App.Msg] {
+      val location = Constants.Endpoints.signUp
+      val method   = Method.Post
+      val headers: List[Header] = List(
+        Header("Content-Type", "application/json")
       )
+      val onSuccess: Response => App.Msg = response =>
+        response.status match {
+          case Status(201, _) => SignUpSuccess("Successfully signed up")
+          case Status(s, _) if s >= 400 && s < 500 =>
+            val json   = response.body
+            val parsed = parse(json).flatMap(_.hcursor.get[String]("error"))
+            parsed match {
+              case Left(_)      => SignUpError("Something went wrong")
+              case Right(error) => SignUpError(error)
+            }
+        }
+      val onFailure: HttpError => App.Msg = e => SignUpError(e.toString())
     }
-
   }
+
 }
