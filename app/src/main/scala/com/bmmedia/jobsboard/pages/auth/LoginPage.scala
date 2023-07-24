@@ -44,7 +44,7 @@ final case class LoginPage(
           Cmd.None
         )
       } else {
-        (this, Endpoints.signIn.call(Credentials(email, password)))
+        (this, signIn.call(Credentials(email, password)))
       }
     case SignInError(message) => (setErrorStatus(message), Cmd.None)
     case SignInSuccess(message, token, email) =>
@@ -112,6 +112,35 @@ final case class LoginPage(
     this.copy(status = Some(Page.Status(message, Page.StatusKind.SUCCESS)))
   }
 
+  val signIn = new Endpoint[App.Msg] {
+    val location = Constants.Endpoints.signIn
+    val method   = Method.Post
+    val headers: List[Header] = List(
+      Header("Content-Type", "application/json")
+    )
+    val onSuccess: Response => App.Msg = response =>
+      response.status match {
+        case Status(200, _) =>
+          val jwt = response.headers.get("authorization").get
+          println(jwt)
+
+          SignInSuccess(
+            "Successfully signed in",
+            jwt,
+            email
+          )
+
+        case Status(s, _) if s >= 400 && s < 500 =>
+          val json   = response.body
+          val parsed = parse(json).flatMap(_.hcursor.get[String]("error"))
+          parsed match {
+            case Left(_)      => SignInError("Credentials are invalid")
+            case Right(error) => SignInError(error)
+          }
+      }
+    val onFailure: HttpError => App.Msg = e => SignInError(e.toString())
+  }
+
 object LoginPage {
   trait Msg extends App.Msg
 
@@ -124,31 +153,4 @@ object LoginPage {
   case class SignInError(message: String)                                 extends Msg
   case class SignInSuccess(message: String, token: String, email: String) extends Msg
 
-  object Endpoints {
-    val signIn = new Endpoint[App.Msg] {
-      val location = Constants.Endpoints.signIn
-      val method   = Method.Post
-      val headers: List[Header] = List(
-        Header("Content-Type", "application/json")
-      )
-      val onSuccess: Response => App.Msg = response =>
-        response.status match {
-          case Status(200, _) =>
-            Logger.consoleLog[IO](response.headers.get("Authorization").get)
-            SignInSuccess(
-              "Successfully signed in",
-              response.headers.get("Authorization").get,
-              "test@gmail.com"
-            )
-          case Status(s, _) if s >= 400 && s < 500 =>
-            val json   = response.body
-            val parsed = parse(json).flatMap(_.hcursor.get[String]("error"))
-            parsed match {
-              case Left(_)      => SignInError("Credentials are invalid")
-              case Right(error) => SignInError(error)
-            }
-        }
-      val onFailure: HttpError => App.Msg = e => SignInError(e.toString())
-    }
-  }
 }

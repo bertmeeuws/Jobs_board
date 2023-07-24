@@ -66,7 +66,7 @@ class App extends TyrianApp[Msg, App.Model] {
   }
 
   override def view(model: Model): Html[App.Msg] = div(
-    Header.view(),
+    Header.view(model.session.isLoggedIn),
     model.page.view()
   )
 }

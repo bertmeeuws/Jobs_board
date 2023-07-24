@@ -10,6 +10,7 @@ import cats.effect.*
 import cats.implicits.*
 import com.bmmedia.common.Constants
 import scala.scalajs.js.Date
+import tyrian.Html
 
 final case class Session(email: Option[String] = None, token: Option[String] = None) {
   import Session.*
@@ -22,6 +23,8 @@ final case class Session(email: Option[String] = None, token: Option[String] = N
         Commands.setAllSessionsCookies(email, token, isFresh = true)
       )
   }
+
+  def isLoggedIn: Boolean = email.isDefined && token.isDefined
 
   def initCmd: Cmd[IO, App.Msg] = {
     val maybeCookies = for {
@@ -37,6 +40,14 @@ final case class Session(email: Option[String] = None, token: Option[String] = N
         Logger.consoleLog[IO]("No cookies found")
         Cmd.None
     }
+  }
+
+  def view(): Html[App.Msg] = {
+    div(
+      h1("Session"),
+      text(s"email: ${email.getOrElse("None")}"),
+      text(s"token: ${token.getOrElse("None")}")
+    )
   }
 }
 
