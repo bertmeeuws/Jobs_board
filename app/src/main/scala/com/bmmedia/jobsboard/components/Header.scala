@@ -10,12 +10,20 @@ import com.bmmedia.jobsboard.pages.Page
 
 object Header {
 
-  def view() = div(
-    ul(`class` := "flex items-center")(
+  def view(isLoggedIn: Boolean = false) = div(
+    ul(`class` := "flex items-center bg-gray-100")(
       viewLogo(),
-      createNav("jobs", Page.Urls.JOBS),
-      createNav("login", Page.Urls.LOGIN),
-      createNav("Sign up", Page.Urls.REGISTER)
+      div(`class` := "flex-grow text-right flex justify-end flex-row")(
+        createNav("Jobs", Page.Urls.JOBS),
+        if isLoggedIn == true then {
+          createNav("Logout", Page.Urls.HOME)
+        } else {
+          div(
+            createNav("Login", Page.Urls.LOGIN),
+            createNav("Sign up", Page.Urls.REGISTER)
+          )
+        }
+      )
     )
   )
 
