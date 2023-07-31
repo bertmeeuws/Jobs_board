@@ -75,6 +75,7 @@ class JobRoutes[F[_]: Concurrent: Logger] private (jobsRepository: Jobs[F])
           jobInfo <- req.as[JobInfo].logError(e => s"Error parsing job info: $e")
           _       <- Logger[F].info(s"Job info: $jobInfo")
           job     <- createJob(jobInfo)
+          _       <- Logger[F].info(s"Job: $job")
           _       <- Logger[F].info("Job created")
           uuid    <- jobsRepository.create(job.ownerEmail, jobInfo)
           _ <- Logger[F].info(

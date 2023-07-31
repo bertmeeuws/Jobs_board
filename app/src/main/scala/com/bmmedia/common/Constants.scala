@@ -9,6 +9,8 @@ object Constants {
     val signUp = "/api/auth/register"
     val signIn = "/api/auth/login"
 
+    val allJobs = "/api/jobs"
+
   }
 
   object cookies {
